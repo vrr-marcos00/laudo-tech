@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { Suspense, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useRouter, useSearchParams } from 'next/navigation'
 import api from '@/lib/api'
@@ -13,6 +13,14 @@ import { ArrowLeft, FileText } from 'lucide-react'
 import Link from 'next/link'
 
 export default function NovoLaudoPage() {
+  return (
+    <Suspense fallback={null}>
+      <NovoLaudoForm />
+    </Suspense>
+  )
+}
+
+function NovoLaudoForm() {
   const router = useRouter()
   const qc = useQueryClient()
   const params = useSearchParams()
