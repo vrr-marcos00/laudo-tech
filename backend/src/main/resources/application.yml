@@ -21,7 +21,7 @@ spring:
       max-request-size: 50MB
 
 server:
-  port: 8080
+  port: ${PORT:8080}
   error:
     include-message: always
 
@@ -35,4 +35,4 @@ app:
     secret-key: ${MINIO_SECRET_KEY:minioadmin123}
     bucket: ${MINIO_BUCKET:laudotech}
   cors:
-    allowed-origins: "http://localhost:3000"
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000}
