@@ -84,7 +84,7 @@ export default function LaudoPreviewPage() {
           {laudo.mostrarCapa !== false && (
             <div style={{ minHeight: '100vh', padding: '2cm', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', pageBreakAfter: 'always' }}>
               {(laudo.logoCapaUrl) && (
-                <img src={laudo.logoCapaUrl} alt="Logo" style={{ maxHeight: 160, marginBottom: 24 }} crossOrigin="anonymous" />
+                <img src={laudo.logoCapaUrl} alt="Logo" style={{ maxHeight: 160, marginBottom: 24 }} />
               )}
               <h1 style={{ fontSize: '20pt', fontWeight: 'bold', color: '#00467f', marginBottom: 8 }}>
                 {laudo.tituloCapa || 'LAUDO TÉCNICO DAS INSTALAÇÕES ELÉTRICAS'}
@@ -153,7 +153,7 @@ export default function LaudoPreviewPage() {
                           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 8 }}>
                             {pair.map(foto => (
                               <div key={foto.id} style={{ position: 'relative' }}>
-                                <img src={foto.url} alt="" style={{ width: '100%', maxHeight: 270, objectFit: 'cover', border: '1px solid #ddd' }} crossOrigin="anonymous" />
+                                <img src={foto.url} alt="" style={{ width: '100%', maxHeight: 270, objectFit: 'cover', border: '1px solid #ddd' }} />
                                 {/* Annotation points */}
                                 {foto.pontos?.map(ponto => (
                                   <div key={ponto.id} style={{

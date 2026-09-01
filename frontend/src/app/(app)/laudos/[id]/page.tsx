@@ -512,7 +512,7 @@ export default function LaudoEditorPage() {
                 <p className="text-xs text-slate-500 mb-4">Logo exibida na capa do laudo (empresa ou engenheiro responsável). Se não informada, usa a logo do cadastro do engenheiro.</p>
                 {laudo.logoCapaUrl ? (
                   <div className="flex items-start gap-4">
-                    <img src={laudo.logoCapaUrl} alt="Logo da capa" className="h-28 object-contain border rounded p-2 bg-slate-50" crossOrigin="anonymous" />
+                    <img src={laudo.logoCapaUrl} alt="Logo da capa" className="h-28 object-contain border rounded p-2 bg-slate-50" />
                     {!readOnly && (
                       <div className="flex flex-col gap-2">
                         <Button variant="outline" size="sm" onClick={() => logoInputRef.current?.click()} disabled={uploadingLogo}>
