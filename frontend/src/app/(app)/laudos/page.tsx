@@ -55,7 +55,7 @@ export default function LaudosPage() {
       </div>
 
       <div className="flex gap-3 mb-6">
-        <Select value={status} onValueChange={v => { setStatus(v); setPage(1) }}>
+        <Select value={status} onValueChange={v => { setStatus(v ?? ''); setPage(1) }}>
           <SelectTrigger className="w-44"><SelectValue placeholder="Todos os status" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="">Todos</SelectItem>

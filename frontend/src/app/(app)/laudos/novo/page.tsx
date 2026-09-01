@@ -71,7 +71,7 @@ export default function NovoLaudoPage() {
           <form onSubmit={handleSubmit} className="space-y-5">
             <div className="space-y-1">
               <Label>Cliente *</Label>
-              <Select value={form.clienteId} onValueChange={v => set('clienteId', v)}
+              <Select value={form.clienteId} onValueChange={v => set('clienteId', v ?? '')}
                 items={Object.fromEntries(clientes.map(c => [String(c.id), c.nome]))}>
                 <SelectTrigger><SelectValue placeholder="Selecione o cliente..." /></SelectTrigger>
                 <SelectContent>
@@ -82,7 +82,7 @@ export default function NovoLaudoPage() {
 
             <div className="space-y-1">
               <Label>Modelo de Laudo</Label>
-              <Select value={form.modeloId} onValueChange={v => set('modeloId', v)}
+              <Select value={form.modeloId} onValueChange={v => set('modeloId', v ?? '')}
                 items={Object.fromEntries(modelos.map(m => [String(m.id), m.nome]))}>
                 <SelectTrigger><SelectValue placeholder="Selecione um modelo (opcional)..." /></SelectTrigger>
                 <SelectContent>

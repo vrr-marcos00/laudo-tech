@@ -169,7 +169,21 @@ export default function ClienteDetailPage() {
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
         <DialogContent className="max-w-2xl">
           <DialogHeader><DialogTitle>Editar Cliente</DialogTitle></DialogHeader>
-          <ClienteForm defaultValues={cliente} onSubmit={handleEdit} loading={loading} />
+          <ClienteForm
+            defaultValues={{
+              nome: cliente.nome,
+              cnpj: cliente.cnpj ?? undefined,
+              email: cliente.email ?? undefined,
+              telefone: cliente.telefone ?? undefined,
+              descricao: cliente.descricao ?? undefined,
+              endereco: cliente.endereco ?? undefined,
+              cidade: cliente.cidade ?? undefined,
+              estado: cliente.estado ?? undefined,
+              cep: cliente.cep ?? undefined,
+            }}
+            onSubmit={handleEdit}
+            loading={loading}
+          />
         </DialogContent>
       </Dialog>
 

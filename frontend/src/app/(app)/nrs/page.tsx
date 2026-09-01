@@ -98,7 +98,7 @@ export default function NrsPage() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
           <Input className="pl-10" placeholder="Buscar por NR ou título..." value={search} onChange={e => { setSearch(e.target.value); setPage(1) }} />
         </div>
-        <Select value={prioridade} onValueChange={v => { setPrioridade(v); setPage(1) }}>
+        <Select value={prioridade} onValueChange={v => { setPrioridade(v ?? ''); setPage(1) }}>
           <SelectTrigger className="w-40"><SelectValue placeholder="Prioridade" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="">Todas</SelectItem>
