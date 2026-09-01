@@ -31,6 +31,11 @@ app:
     expiration-ms: 86400000  # 24h
   minio:
     endpoint: ${MINIO_ENDPOINT:http://localhost:9000}
+    # Public base URL for reading files, with no trailing slash and no object path.
+    # For MinIO/local dev this defaults to <endpoint>/<bucket> (S3 endpoint doubles as public URL).
+    # For providers where the S3 API endpoint is not publicly reachable (e.g. Cloudflare R2),
+    # set this to the bucket's public domain (r2.dev subdomain or custom domain) instead.
+    public-url: ${MINIO_PUBLIC_URL:${MINIO_ENDPOINT:http://localhost:9000}/${MINIO_BUCKET:laudotech}}
     access-key: ${MINIO_ACCESS_KEY:minioadmin}
     secret-key: ${MINIO_SECRET_KEY:minioadmin123}
     bucket: ${MINIO_BUCKET:laudotech}
