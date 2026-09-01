@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from 'next/server'
 
 export default function proxy(request: NextRequest) {
   const token = request.cookies.get('token')?.value
-  const isAuth = request.nextUrl.pathname.startsWith('/login')
+  const isAuth = request.nextUrl.pathname.startsWith('/login') || request.nextUrl.pathname.startsWith('/cadastro')
 
   if (!token && !isAuth) {
     return NextResponse.redirect(new URL('/login', request.url))
