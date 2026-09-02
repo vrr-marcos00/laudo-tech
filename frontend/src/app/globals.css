@@ -128,3 +128,25 @@
     @apply font-sans;
   }
 }
+
+.laudo-rich-content p {
+  margin-bottom: 0.75em;
+}
+.laudo-rich-content h2 {
+  font-size: 13pt;
+  font-weight: bold;
+  margin: 1em 0 0.5em;
+}
+.laudo-rich-content h3 {
+  font-size: 12pt;
+  font-weight: bold;
+  margin: 1em 0 0.5em;
+}
+.laudo-rich-content ul,
+.laudo-rich-content ol {
+  margin: 0.5em 0 0.75em 1.5em;
+}
+.laudo-rich-content img {
+  max-width: 100%;
+  margin: 0.75em 0;
+}

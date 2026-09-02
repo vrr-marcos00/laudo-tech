@@ -268,7 +268,8 @@ export default function LaudoPreviewPage() {
             return (
               <div key={t.id ?? i} style={{ padding: '2cm', pageBreakAfter: 'always' }}>
                 <SectionTitle>{i + 2}. {t.titulo.toUpperCase()}</SectionTitle>
-                <p style={{ textAlign: 'justify', whiteSpace: 'pre-wrap' }}>{t.conteudo}</p>
+                <div className="laudo-rich-content" style={{ textAlign: 'justify' }}
+                  dangerouslySetInnerHTML={{ __html: t.conteudo }} />
               </div>
             )
           })}
