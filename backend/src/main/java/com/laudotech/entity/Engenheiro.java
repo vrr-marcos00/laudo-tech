@@ -25,6 +25,8 @@ public class Engenheiro implements UserDetails {
     @Column(name = "titulo_profissional")
     private String tituloProfissional;
 
+    private String estado;
+
     @Column(nullable = false, unique = true)
     private String email;
 

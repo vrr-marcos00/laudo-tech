@@ -19,6 +19,7 @@ const schema = z.object({
   nome: z.string().min(1, 'Nome obrigatório'),
   crea: z.string().min(1, 'CREA obrigatório'),
   tituloProfissional: z.string().optional(),
+  estado: z.string().max(2).optional(),
   email: z.string().email('Email inválido'),
   telefone: z.string().optional(),
   senha: z.string().min(6, 'Mínimo 6 caracteres').optional().or(z.literal('')),
@@ -51,7 +52,7 @@ export default function PerfilPage() {
 
   function openEdit() {
     if (!eng) return
-    reset({ nome: eng.nome, crea: eng.crea, tituloProfissional: eng.tituloProfissional, email: eng.email, telefone: eng.telefone ?? '' })
+    reset({ nome: eng.nome, crea: eng.crea, tituloProfissional: eng.tituloProfissional, estado: eng.estado ?? '', email: eng.email, telefone: eng.telefone ?? '' })
     setOpen(true)
   }
 
@@ -119,6 +120,10 @@ export default function PerfilPage() {
                 <Label>CREA *</Label>
                 <Input {...register('crea')} />
                 {errors.crea && <p className="text-red-500 text-xs">{errors.crea.message}</p>}
+              </div>
+              <div className="space-y-1">
+                <Label>Estado (UF)</Label>
+                <Input {...register('estado')} placeholder="DF" maxLength={2} />
               </div>
               <div className="space-y-1">
                 <Label>Título Profissional</Label>

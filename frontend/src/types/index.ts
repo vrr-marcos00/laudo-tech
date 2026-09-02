@@ -13,6 +13,7 @@ export interface Engenheiro {
   nome: string
   crea: string
   tituloProfissional: string
+  estado: string | null
   email: string
   telefone: string | null
   logoUrl: string | null
@@ -112,17 +113,26 @@ export interface Laudo {
   engenheiroId: number
   engenheiroNome: string
   engenheiroCrea: string
+  engenheiroEstado: string | null
+  engenheiroTituloProfissional: string | null
+  engenheiroEmail: string | null
+  engenheiroTelefone: string | null
   clienteId: number
   clienteNome: string
   clienteCnpj: string | null
+  clienteEndereco: string | null
+  clienteCidade: string | null
+  clienteCep: string | null
   clienteFotoUrl: string | null
   clienteDescricao: string | null
   modeloId: number | null
   status: LaudoStatus
   numeroArt: string | null
+  tipoLaudo: string | null
   dataVisita: string | null
   dataEmissao: string | null
   quemAcompanhou: string | null
+  funcaoAcompanhante: string | null
   versao: number
   mostrarCapa: boolean
   mostrarSumario: boolean

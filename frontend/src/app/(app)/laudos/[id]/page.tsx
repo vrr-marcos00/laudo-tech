@@ -236,9 +236,11 @@ export default function LaudoEditorPage() {
     return {
       clienteId: laudo!.clienteId,
       numeroArt: laudo!.numeroArt,
+      tipoLaudo: laudo!.tipoLaudo,
       dataVisita: laudo!.dataVisita,
       dataEmissao: laudo!.dataEmissao,
       quemAcompanhou: laudo!.quemAcompanhou,
+      funcaoAcompanhante: laudo!.funcaoAcompanhante,
       mostrarCapa: laudo!.mostrarCapa,
       mostrarSumario: laudo!.mostrarSumario,
       mostrarAssinaturaEngenheiro: laudo!.mostrarAssinaturaEngenheiro,
@@ -393,12 +395,12 @@ export default function LaudoEditorPage() {
                 <InfoRow label="Cliente" value={`${laudo.clienteNome} ${laudo.clienteCnpj ? '(' + laudo.clienteCnpj + ')' : ''}`} />
                 <InfoRow label="Engenheiro" value={`${laudo.engenheiroNome} — ${laudo.engenheiroCrea}`} />
                 <InfoRow label="Número ART" value={laudo.numeroArt ?? '—'} />
+                <InfoRow label="Tipo de Laudo" value={laudo.tipoLaudo ?? '—'} />
                 <InfoRow label="Versão" value={String(laudo.versao)} />
                 <InfoRow label="Data da Visita" value={laudo.dataVisita ? formatDate(laudo.dataVisita) : '—'} />
                 <InfoRow label="Data de Emissão" value={laudo.dataEmissao ? formatDate(laudo.dataEmissao) : '—'} />
-                <div className="col-span-2">
-                  <InfoRow label="Quem acompanhou" value={laudo.quemAcompanhou ?? '—'} />
-                </div>
+                <InfoRow label="Quem acompanhou" value={laudo.quemAcompanhou ?? '—'} />
+                <InfoRow label="Função do acompanhante" value={laudo.funcaoAcompanhante ?? '—'} />
               </div>
             </CardContent>
           </Card>

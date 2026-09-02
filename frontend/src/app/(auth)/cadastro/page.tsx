@@ -18,6 +18,7 @@ const schema = z.object({
   nome: z.string().min(1, 'Nome obrigatório'),
   crea: z.string().min(1, 'CREA obrigatório'),
   tituloProfissional: z.string().optional(),
+  estado: z.string().max(2).optional(),
   email: z.string().email('Email inválido'),
   telefone: z.string().optional(),
   senha: z.string().min(6, 'Mínimo 6 caracteres'),
@@ -64,11 +65,15 @@ export default function CadastroPage() {
               <Input id="nome" {...register('nome')} placeholder="Marcos Sá" />
               {errors.nome && <p className="text-red-500 text-xs">{errors.nome.message}</p>}
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-3 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="crea">CREA *</Label>
-                <Input id="crea" {...register('crea')} placeholder="CREA-DF 00000" />
+                <Input id="crea" {...register('crea')} placeholder="00000" />
                 {errors.crea && <p className="text-red-500 text-xs">{errors.crea.message}</p>}
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="estado">Estado (UF)</Label>
+                <Input id="estado" {...register('estado')} placeholder="DF" maxLength={2} />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="tituloProfissional">Título Profissional</Label>

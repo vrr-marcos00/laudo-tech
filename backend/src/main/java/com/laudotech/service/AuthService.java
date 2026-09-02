@@ -38,6 +38,7 @@ public class AuthService {
                 .nome(upper(req.getNome()))
                 .crea(upper(req.getCrea()))
                 .tituloProfissional(upper(req.getTituloProfissional()))
+                .estado(upper(req.getEstado()))
                 .email(req.getEmail())
                 .telefone(upper(req.getTelefone()))
                 .senhaHash(passwordEncoder.encode(req.getSenha()))

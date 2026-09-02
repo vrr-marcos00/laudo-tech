@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.stream.IntStream;
 
 import static com.laudotech.util.TextUtils.isHtmlBlank;
+import static com.laudotech.util.TextUtils.upper;
 
 @Service
 @RequiredArgsConstructor
@@ -40,7 +41,9 @@ public class LaudoService {
                 .engenheiro(authEng).cliente(cliente)
                 .status(Status.RASCUNHO).numeroArt(req.getNumeroArt())
                 .dataVisita(req.getDataVisita()).dataEmissao(req.getDataEmissao())
-                .quemAcompanhou(req.getQuemAcompanhou()).versao(1)
+                .quemAcompanhou(req.getQuemAcompanhou())
+                .funcaoAcompanhante(req.getFuncaoAcompanhante())
+                .tipoLaudo(upper(req.getTipoLaudo())).versao(1)
                 .build();
 
         if (req.getModeloId() != null) {
@@ -70,6 +73,8 @@ public class LaudoService {
         laudo.setDataVisita(req.getDataVisita());
         laudo.setDataEmissao(req.getDataEmissao());
         laudo.setQuemAcompanhou(req.getQuemAcompanhou());
+        laudo.setFuncaoAcompanhante(req.getFuncaoAcompanhante());
+        if (req.getTipoLaudo() != null) laudo.setTipoLaudo(upper(req.getTipoLaudo()));
         if (req.getMostrarCapa() != null) laudo.setMostrarCapa(req.getMostrarCapa());
         if (req.getMostrarSumario() != null) laudo.setMostrarSumario(req.getMostrarSumario());
         if (req.getMostrarAssinaturaEngenheiro() != null) laudo.setMostrarAssinaturaEngenheiro(req.getMostrarAssinaturaEngenheiro());
@@ -187,6 +192,8 @@ public class LaudoService {
                 .numeroArt(origem.getNumeroArt())
                 .dataVisita(origem.getDataVisita()).dataEmissao(origem.getDataEmissao())
                 .quemAcompanhou(origem.getQuemAcompanhou())
+                .funcaoAcompanhante(origem.getFuncaoAcompanhante())
+                .tipoLaudo(origem.getTipoLaudo())
                 .versao(origem.getVersao() + 1)
                 .laudoOrigem(origem)
                 .mostrarCapa(origem.isMostrarCapa())
@@ -306,17 +313,26 @@ public class LaudoService {
                 .engenheiroId(l.getEngenheiro().getId())
                 .engenheiroNome(l.getEngenheiro().getNome())
                 .engenheiroCrea(l.getEngenheiro().getCrea())
+                .engenheiroEstado(l.getEngenheiro().getEstado())
+                .engenheiroTituloProfissional(l.getEngenheiro().getTituloProfissional())
+                .engenheiroEmail(l.getEngenheiro().getEmail())
+                .engenheiroTelefone(l.getEngenheiro().getTelefone())
                 .clienteId(l.getCliente().getId())
                 .clienteNome(l.getCliente().getNome())
                 .clienteCnpj(l.getCliente().getCnpj())
+                .clienteEndereco(l.getCliente().getEndereco())
+                .clienteCidade(l.getCliente().getCidade())
+                .clienteCep(l.getCliente().getCep())
                 .clienteFotoUrl(l.getCliente().getFotoUrl())
                 .clienteDescricao(l.getCliente().getDescricao())
                 .modeloId(l.getModelo() != null ? l.getModelo().getId() : null)
                 .status(l.getStatus().name())
                 .numeroArt(l.getNumeroArt())
+                .tipoLaudo(l.getTipoLaudo())
                 .dataVisita(l.getDataVisita())
                 .dataEmissao(l.getDataEmissao())
                 .quemAcompanhou(l.getQuemAcompanhou())
+                .funcaoAcompanhante(l.getFuncaoAcompanhante())
                 .versao(l.getVersao())
                 .mostrarCapa(l.isMostrarCapa())
                 .mostrarSumario(l.isMostrarSumario())

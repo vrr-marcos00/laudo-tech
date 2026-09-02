@@ -12,6 +12,8 @@ public class LaudoRequest {
     private LocalDate dataVisita;
     private LocalDate dataEmissao;
     private String quemAcompanhou;
+    private String funcaoAcompanhante;
+    private String tipoLaudo;
     private Boolean mostrarCapa;
     private Boolean mostrarSumario;
     private Boolean mostrarAssinaturaEngenheiro;

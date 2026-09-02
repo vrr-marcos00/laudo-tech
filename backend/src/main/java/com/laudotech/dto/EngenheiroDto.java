@@ -8,6 +8,7 @@ public class EngenheiroDto {
     private String nome;
     private String crea;
     private String tituloProfissional;
+    private String estado;
     private String email;
     private String telefone;
     private String logoUrl;

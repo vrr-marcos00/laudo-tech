@@ -45,6 +45,12 @@ public class Laudo {
     @Column(name = "quem_acompanhou")
     private String quemAcompanhou;
 
+    @Column(name = "funcao_acompanhante")
+    private String funcaoAcompanhante;
+
+    @Column(name = "tipo_laudo")
+    private String tipoLaudo;
+
     private Integer versao = 1;
 
     @Column(name = "titulo_capa", length = 500)

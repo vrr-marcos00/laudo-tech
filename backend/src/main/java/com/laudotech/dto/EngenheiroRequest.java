@@ -8,6 +8,7 @@ public class EngenheiroRequest {
     @NotBlank private String nome;
     @NotBlank private String crea;
     private String tituloProfissional;
+    private String estado;
     @Email @NotBlank private String email;
     private String telefone;
     private String senha;

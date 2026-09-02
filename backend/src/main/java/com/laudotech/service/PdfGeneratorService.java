@@ -277,17 +277,31 @@ public class PdfGeneratorService {
         addTableRow(table, "NOME DA EMPRESA", laudo.getCliente().getNome(), bold, regular);
         if (laudo.getCliente().getCnpj() != null) addTableRow(table, "CNPJ", laudo.getCliente().getCnpj(), bold, regular);
         if (laudo.getCliente().getEndereco() != null) addTableRow(table, "ENDEREÇO", laudo.getCliente().getEndereco(), bold, regular);
-        if (laudo.getCliente().getCidade() != null) addTableRow(table, "CIDADE/ESTADO", laudo.getCliente().getCidade() + "/" + laudo.getCliente().getEstado(), bold, regular);
-        if (laudo.getDataVisita() != null) addTableRow(table, "DATA DE VISITA", laudo.getDataVisita().format(DATE_FMT), bold, regular);
-        if (laudo.getNumeroArt() != null) addTableRow(table, "NÚMERO ART", laudo.getNumeroArt(), bold, regular);
-        if (laudo.getQuemAcompanhou() != null) addTableRow(table, "ACOMPANHOU A VISITA", laudo.getQuemAcompanhou(), bold, regular);
+        if (laudo.getCliente().getCidade() != null) addTableRow(table, "CIDADE", laudo.getCliente().getCidade(), bold, regular);
+        if (laudo.getCliente().getCep() != null) addTableRow(table, "CEP", laudo.getCliente().getCep(), bold, regular);
         doc.add(table);
+
+        addSectionTitle(doc, "LAUDO", bold);
+        Table tLaudo = new Table(colWidths).useAllAvailableWidth().setMarginBottom(10);
+        if (laudo.getTipoLaudo() != null) addTableRow(tLaudo, "TIPO DE LAUDO", laudo.getTipoLaudo(), bold, regular);
+        if (laudo.getDataVisita() != null) addTableRow(tLaudo, "DATA DE VISITA", laudo.getDataVisita().format(DATE_FMT), bold, regular);
+        if (laudo.getNumeroArt() != null) addTableRow(tLaudo, "NÚMERO ART", laudo.getNumeroArt(), bold, regular);
+        doc.add(tLaudo);
+
+        if (laudo.getQuemAcompanhou() != null && !laudo.getQuemAcompanhou().isBlank()) {
+            String funcao = laudo.getFuncaoAcompanhante();
+            String frase = "Esteve presente durante a inspeção o Sr(a). " + laudo.getQuemAcompanhou()
+                    + (funcao != null && !funcao.isBlank() ? ", " + funcao : "")
+                    + ", que acompanhou e verificou todas as etapas do processo.";
+            doc.add(new Paragraph(frase).setFont(regular).setFontSize(11).setMarginBottom(20));
+        }
 
         addSectionTitle(doc, "RESPONSÁVEL TÉCNICO", bold);
         Table tEng = new Table(colWidths).useAllAvailableWidth().setMarginBottom(20);
-        addTableRow(tEng, "NOME", laudo.getEngenheiro().getNome(), bold, regular);
-        addTableRow(tEng, "CREA", laudo.getEngenheiro().getCrea(), bold, regular);
-        if (laudo.getEngenheiro().getTituloProfissional() != null) addTableRow(tEng, "TÍTULO", laudo.getEngenheiro().getTituloProfissional(), bold, regular);
+        addTableRow(tEng, "NOME DO RESPONSÁVEL", laudo.getEngenheiro().getNome(), bold, regular);
+        String creaLabel = laudo.getEngenheiro().getEstado() != null ? "CREA/" + laudo.getEngenheiro().getEstado() : "CREA";
+        addTableRow(tEng, creaLabel, laudo.getEngenheiro().getCrea(), bold, regular);
+        if (laudo.getEngenheiro().getTituloProfissional() != null) addTableRow(tEng, "TÍTULO PROFISSIONAL", laudo.getEngenheiro().getTituloProfissional(), bold, regular);
         if (laudo.getEngenheiro().getEmail() != null) addTableRow(tEng, "EMAIL", laudo.getEngenheiro().getEmail(), bold, regular);
         if (laudo.getEngenheiro().getTelefone() != null) addTableRow(tEng, "TELEFONE", laudo.getEngenheiro().getTelefone(), bold, regular);
         doc.add(tEng);

@@ -128,16 +128,33 @@ export default function LaudoPreviewPage() {
             <InfoTable rows={[
               ['NOME DA EMPRESA', laudo.clienteNome],
               laudo.clienteCnpj ? ['CNPJ', laudo.clienteCnpj] : null,
+              laudo.clienteEndereco ? ['ENDEREÇO', laudo.clienteEndereco] : null,
+              laudo.clienteCidade ? ['CIDADE', laudo.clienteCidade] : null,
+              laudo.clienteCep ? ['CEP', laudo.clienteCep] : null,
+            ].filter(Boolean) as [string, string][]} />
+
+            <SectionTitle style={{ marginTop: 24 }}>LAUDO</SectionTitle>
+            <InfoTable rows={[
+              laudo.tipoLaudo ? ['TIPO DE LAUDO', laudo.tipoLaudo] : null,
               laudo.dataVisita ? ['DATA DE VISITA', formatDate(laudo.dataVisita)] : null,
               laudo.numeroArt ? ['NÚMERO ART', laudo.numeroArt] : null,
-              laudo.quemAcompanhou ? ['ACOMPANHOU A VISITA', laudo.quemAcompanhou] : null,
             ].filter(Boolean) as [string, string][]} />
+
+            {laudo.quemAcompanhou && (
+              <p style={{ marginTop: 12, marginBottom: 12 }}>
+                Esteve presente durante a inspeção o Sr(a). {laudo.quemAcompanhou}
+                {laudo.funcaoAcompanhante ? `, ${laudo.funcaoAcompanhante}` : ''}, que acompanhou e verificou todas as etapas do processo.
+              </p>
+            )}
 
             <SectionTitle style={{ marginTop: 24 }}>RESPONSÁVEL TÉCNICO</SectionTitle>
             <InfoTable rows={[
-              ['NOME', laudo.engenheiroNome],
-              ['CREA', laudo.engenheiroCrea],
-            ]} />
+              ['NOME DO RESPONSÁVEL', laudo.engenheiroNome],
+              [laudo.engenheiroEstado ? `CREA/${laudo.engenheiroEstado}` : 'CREA', laudo.engenheiroCrea],
+              laudo.engenheiroTituloProfissional ? ['TÍTULO PROFISSIONAL', laudo.engenheiroTituloProfissional] : null,
+              laudo.engenheiroEmail ? ['EMAIL', laudo.engenheiroEmail] : null,
+              laudo.engenheiroTelefone ? ['TELEFONE', laudo.engenheiroTelefone] : null,
+            ].filter(Boolean) as [string, string][]} />
           </div>
 
           {/* === DESCRIÇÃO EMPRESA === */}

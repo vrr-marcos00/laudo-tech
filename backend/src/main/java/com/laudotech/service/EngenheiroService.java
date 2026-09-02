@@ -27,6 +27,7 @@ public class EngenheiroService {
         eng.setNome(upper(req.getNome()));
         eng.setCrea(upper(req.getCrea()));
         eng.setTituloProfissional(upper(req.getTituloProfissional()));
+        eng.setEstado(upper(req.getEstado()));
         eng.setTelefone(upper(req.getTelefone()));
         if (req.getSenha() != null && !req.getSenha().isBlank()) {
             eng.setSenhaHash(passwordEncoder.encode(req.getSenha()));
@@ -62,6 +63,7 @@ public class EngenheiroService {
                 .nome(e.getNome())
                 .crea(e.getCrea())
                 .tituloProfissional(e.getTituloProfissional())
+                .estado(e.getEstado())
                 .email(e.getEmail())
                 .telefone(e.getTelefone())
                 .logoUrl(e.getLogoUrl())
