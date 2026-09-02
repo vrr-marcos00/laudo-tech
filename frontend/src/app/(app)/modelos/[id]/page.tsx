@@ -17,10 +17,11 @@ import { ArrowLeft, Plus, GripVertical, Trash2, Save } from 'lucide-react'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
 
-function SortableTopico({ topico, index, showErrors, onChange, onRemove }: {
+function SortableTopico({ topico, index, showErrors, modeloId, onChange, onRemove }: {
   topico: ModeloTopico & { _key: string }
   index: number
   showErrors: boolean
+  modeloId?: number
   onChange: (field: 'titulo' | 'conteudo', value: string) => void
   onRemove: () => void
 }) {
@@ -51,6 +52,7 @@ function SortableTopico({ topico, index, showErrors, onChange, onRemove }: {
                 <TopicoRichEditor
                   value={topico.conteudo}
                   onChange={value => onChange('conteudo', value)}
+                  modeloId={modeloId}
                   invalid={conteudoInvalido}
                 />
                 {conteudoInvalido && <p className="text-xs text-red-500 mt-1">Conteúdo é obrigatório</p>}
@@ -201,6 +203,7 @@ export default function ModeloTopicoEditorPage() {
                 topico={t}
                 index={i}
                 showErrors={showErrors}
+                modeloId={Number(id)}
                 onChange={(field, value) => updateTopico(t._key, field, value)}
                 onRemove={() => removeTopico(t._key)}
               />

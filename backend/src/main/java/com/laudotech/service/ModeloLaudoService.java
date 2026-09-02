@@ -60,6 +60,10 @@ public class ModeloLaudoService {
         repo.delete(modelo);
     }
 
+    public void assertAcessoParaUpload(Long id, Engenheiro authEng) {
+        assertAcesso(id, authEng);
+    }
+
     private ModeloLaudo assertAcesso(Long id, Engenheiro authEng) {
         ModeloLaudo modelo = repo.findById(id).orElseThrow(() -> new RuntimeException("Modelo não encontrado"));
         if (!modelo.getEngenheiro().getId().equals(authEng.getId())) {

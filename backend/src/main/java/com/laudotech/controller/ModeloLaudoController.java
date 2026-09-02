@@ -3,19 +3,23 @@ package com.laudotech.controller;
 import com.laudotech.dto.ModeloLaudoDto;
 import com.laudotech.dto.ModeloLaudoRequest;
 import com.laudotech.entity.Engenheiro;
+import com.laudotech.service.FileStorageService;
 import com.laudotech.service.ModeloLaudoService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/modelos")
 @RequiredArgsConstructor
 public class ModeloLaudoController {
     private final ModeloLaudoService service;
+    private final FileStorageService fileStorageService;
 
     private Engenheiro auth() {
         return (Engenheiro) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
@@ -45,5 +49,13 @@ public class ModeloLaudoController {
     public ResponseEntity<Void> deletar(@PathVariable Long id) {
         service.deletar(id, auth());
         return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/{id}/topicos/imagens")
+    public ResponseEntity<Map<String, String>> uploadImagemTopico(@PathVariable Long id,
+                                                                    @RequestParam("file") MultipartFile file) {
+        service.assertAcessoParaUpload(id, auth());
+        String url = fileStorageService.upload(file, "modelos/" + id + "/topicos");
+        return ResponseEntity.ok(Map.of("url", url));
     }
 }

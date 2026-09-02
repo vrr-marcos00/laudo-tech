@@ -15,12 +15,16 @@ interface Props {
   value: string
   onChange: (html: string) => void
   laudoId?: number
+  modeloId?: number
   disabled?: boolean
   invalid?: boolean
 }
 
-export function TopicoRichEditor({ value, onChange, laudoId, disabled, invalid }: Props) {
+export function TopicoRichEditor({ value, onChange, laudoId, modeloId, disabled, invalid }: Props) {
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const uploadUrl = laudoId != null ? `/laudos/${laudoId}/topicos/imagens`
+    : modeloId != null ? `/modelos/${modeloId}/topicos/imagens`
+    : null
 
   const editor = useEditor({
     extensions: [
@@ -47,11 +51,11 @@ export function TopicoRichEditor({ value, onChange, laudoId, disabled, invalid }
   })
 
   async function handleImageFile(file: File) {
-    if (laudoId == null) return
+    if (uploadUrl == null) return
     const form = new FormData()
     form.append('file', file)
     try {
-      const { data } = await api.post(`/laudos/${laudoId}/topicos/imagens`, form, {
+      const { data } = await api.post(uploadUrl, form, {
         headers: { 'Content-Type': 'multipart/form-data' },
       })
       editor?.chain().focus().setImage({ src: data.url }).run()
@@ -103,7 +107,7 @@ export function TopicoRichEditor({ value, onChange, laudoId, disabled, invalid }
             onClick={() => editor.chain().focus().toggleOrderedList().run()}>
             <ListOrdered className="w-4 h-4" />
           </Button>
-          {laudoId != null && (
+          {uploadUrl != null && (
             <>
               <Separator orientation="vertical" className="h-5 mx-1" />
               <Button type="button" variant="ghost" size="icon-sm" onClick={() => fileInputRef.current?.click()}>
