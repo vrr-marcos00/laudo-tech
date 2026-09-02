@@ -7,7 +7,6 @@ import { Laudo, LaudoTopico, AreaInspecao } from '@/types'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Switch } from '@/components/ui/switch'
@@ -19,6 +18,8 @@ import { CSS } from '@dnd-kit/utilities'
 import { ArrowLeft, Eye, Download, CheckCircle2, GitBranch, Lock, Plus, GripVertical, Trash2, Save, Upload, ImagePlus, X } from 'lucide-react'
 import Link from 'next/link'
 import { AreasFotosTab } from '@/components/laudos/areas-fotos-tab'
+import { TopicoRichEditor } from '@/components/laudos/topico-rich-editor'
+import { isHtmlEmpty } from '@/lib/html'
 import { STATUS_LABELS, STATUS_COLORS } from '@/lib/status'
 import { formatDate } from '@/lib/date'
 
@@ -29,11 +30,12 @@ const TIPO_LABELS: Record<string, string> = {
   ITENS_CRITICOS: 'Itens Críticos',
 }
 
-function SortableLaudoTopico({ topico, index, showErrors, readOnly, onChange, onRemove }: {
+function SortableLaudoTopico({ topico, index, showErrors, readOnly, laudoId, onChange, onRemove }: {
   topico: TopicoWithKey
   index: number
   showErrors: boolean
   readOnly: boolean
+  laudoId: number
   onChange: (field: 'titulo' | 'conteudo', value: string) => void
   onRemove: () => void
 }) {
@@ -41,7 +43,7 @@ function SortableLaudoTopico({ topico, index, showErrors, readOnly, onChange, on
   const style = { transform: CSS.Transform.toString(transform), transition }
   const isEspecial = topico.tipo === 'REGISTRO_FOTOGRAFICO' || topico.tipo === 'ITENS_CRITICOS'
   const tituloInvalido = showErrors && !isEspecial && !topico.titulo.trim()
-  const conteudoInvalido = showErrors && !isEspecial && !topico.conteudo.trim()
+  const conteudoInvalido = showErrors && !isEspecial && isHtmlEmpty(topico.conteudo)
 
   return (
     <div ref={setNodeRef} style={style} className="mb-3">
@@ -72,9 +74,8 @@ function SortableLaudoTopico({ topico, index, showErrors, readOnly, onChange, on
                 </p>
               ) : (
                 <div>
-                  <Textarea value={topico.conteudo} onChange={e => onChange('conteudo', e.target.value)}
-                    placeholder="Conteúdo..." rows={4} disabled={readOnly}
-                    className={conteudoInvalido ? 'border-red-400 focus-visible:ring-red-400' : ''} />
+                  <TopicoRichEditor value={topico.conteudo} onChange={value => onChange('conteudo', value)}
+                    laudoId={laudoId} disabled={readOnly} invalid={conteudoInvalido} />
                   {conteudoInvalido && <p className="text-xs text-red-500 mt-1">Conteúdo é obrigatório</p>}
                 </div>
               )}
@@ -192,7 +193,7 @@ export default function LaudoEditorPage() {
   }
 
   function topicosInvalidos() {
-    return topicos.filter(t => (t.tipo ?? 'TEXTO') === 'TEXTO' && (!t.titulo.trim() || !t.conteudo.trim()))
+    return topicos.filter(t => (t.tipo ?? 'TEXTO') === 'TEXTO' && (!t.titulo.trim() || isHtmlEmpty(t.conteudo)))
   }
 
   async function salvarTopicos() {
@@ -446,6 +447,7 @@ export default function LaudoEditorPage() {
                     index={i}
                     showErrors={topicosShowErrors}
                     readOnly={readOnly}
+                    laudoId={Number(id)}
                     onChange={(field, value) => updateTopico(t._key, field, value)}
                     onRemove={() => removeTopico(t._key)}
                   />
