@@ -12,6 +12,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/laudos")
@@ -101,5 +102,13 @@ public class LaudoController {
     @DeleteMapping("/{id}/logo-capa")
     public ResponseEntity<LaudoDto> removerLogoCapa(@PathVariable Long id) {
         return ResponseEntity.ok(laudoService.atualizarLogoCapa(id, null, auth()));
+    }
+
+    @PostMapping("/{id}/topicos/imagens")
+    public ResponseEntity<Map<String, String>> uploadImagemTopico(@PathVariable Long id,
+                                                                    @RequestParam("file") MultipartFile file) {
+        laudoService.assertAcessoEEditavel(id, auth());
+        String url = fileStorageService.upload(file, "laudos/" + id + "/topicos");
+        return ResponseEntity.ok(Map.of("url", url));
     }
 }

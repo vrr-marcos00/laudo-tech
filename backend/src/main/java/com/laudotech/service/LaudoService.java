@@ -288,6 +288,12 @@ public class LaudoService {
         }
     }
 
+    public void assertAcessoEEditavel(Long laudoId, Engenheiro authEng) {
+        Laudo laudo = laudoRepo.findById(laudoId).orElseThrow(() -> new RuntimeException("Laudo não encontrado"));
+        assertAcesso(laudo, authEng);
+        assertEditavel(laudo);
+    }
+
     private void validarTransicao(Status atual, Status novo) {
         if (atual != Status.RASCUNHO || novo != Status.FINALIZADO) {
             throw new RuntimeException("Transição de status inválida: " + atual + " → " + novo);
