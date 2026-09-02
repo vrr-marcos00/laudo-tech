@@ -55,9 +55,9 @@ public class NrCatalogoService {
     }
 
     private NrCatalogo assertAcesso(Long id, Engenheiro authEng) {
-        NrCatalogo nr = repo.findById(id).orElseThrow(() -> new RuntimeException("NR não encontrada"));
+        NrCatalogo nr = repo.findById(id).orElseThrow(() -> new RuntimeException("Norma não encontrada"));
         if (!nr.getEngenheiro().getId().equals(authEng.getId())) {
-            throw new RuntimeException("NR não encontrada");
+            throw new RuntimeException("Norma não encontrada");
         }
         return nr;
     }

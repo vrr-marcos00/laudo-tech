@@ -197,7 +197,7 @@ export default function LaudoPreviewPage() {
                             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '9.5pt', marginBottom: 12 }}>
                               <thead>
                                 <tr style={{ background: '#00467f', color: 'white' }}>
-                                  {['Ponto', 'NR', 'Não Conformidade', 'Recomendação'].map(h => (
+                                  {['Ponto', 'Norma', 'Não Conformidade', 'Recomendação'].map(h => (
                                     <th key={h} style={{ padding: '6px 8px', textAlign: 'left', border: '1px solid #00467f' }}>{h}</th>
                                   ))}
                                 </tr>

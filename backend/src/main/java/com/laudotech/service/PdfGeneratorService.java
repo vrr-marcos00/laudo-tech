@@ -376,7 +376,7 @@ public class PdfGeneratorService {
 
                 if (hasNrs) {
                     Table nrTable = new Table(new float[]{30f, 80f, 200f, 260f}).useAllAvailableWidth().setMarginBottom(15);
-                    addNrHeader(nrTable, bold, "Ponto", "NR", "Não Conformidade", "Recomendação");
+                    addNrHeader(nrTable, bold, "Ponto", "Norma", "Não Conformidade", "Recomendação");
 
                     boolean multiplePhotos = fotos.size() > 1;
                     DeviceRgb imgHeaderBg = new DeviceRgb(220, 230, 242);

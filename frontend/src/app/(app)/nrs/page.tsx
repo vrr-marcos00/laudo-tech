@@ -64,7 +64,7 @@ export default function NrsPage() {
       qc.invalidateQueries({ queryKey: ['nrs'] })
       setOpen(false); setEditNr(null); reset()
     } catch (err) {
-      toast.add({ title: getErrorMessage(err, 'Erro ao salvar NR'), type: 'error' })
+      toast.add({ title: getErrorMessage(err, 'Erro ao salvar norma'), type: 'error' })
     } finally { setLoading(false) }
   }
 
@@ -75,7 +75,7 @@ export default function NrsPage() {
       qc.invalidateQueries({ queryKey: ['nrs'] })
       setDeleteId(null)
     } catch (err) {
-      toast.add({ title: getErrorMessage(err, 'Erro ao excluir NR'), type: 'error' })
+      toast.add({ title: getErrorMessage(err, 'Erro ao excluir norma'), type: 'error' })
     }
   }
 
@@ -87,16 +87,16 @@ export default function NrsPage() {
   return (
     <div className="p-8">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-slate-800">Catálogo de NRs</h1>
+        <h1 className="text-2xl font-bold text-slate-800">Catálogo de Normas</h1>
         <Button className="bg-blue-700 hover:bg-blue-800" onClick={() => { reset({ prioridade: 'MEDIO' }); setEditNr(null); setOpen(true) }}>
-          <Plus className="w-4 h-4 mr-2" /> Nova NR
+          <Plus className="w-4 h-4 mr-2" /> Nova Norma
         </Button>
       </div>
 
       <div className="flex gap-3 mb-6">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-          <Input className="pl-10" placeholder="Buscar por NR ou título..." value={search} onChange={e => { setSearch(e.target.value); setPage(1) }} />
+          <Input className="pl-10" placeholder="Buscar por número ou título..." value={search} onChange={e => { setSearch(e.target.value); setPage(1) }} />
         </div>
         <Select value={prioridade} onValueChange={v => { setPrioridade(v ?? ''); setPage(1) }}>
           <SelectTrigger className="w-40"><SelectValue placeholder="Prioridade" /></SelectTrigger>
@@ -136,7 +136,7 @@ export default function NrsPage() {
         {nrs.length === 0 && (
           <div className="text-center py-16 text-slate-400">
             <Shield className="w-12 h-12 mx-auto mb-3 opacity-30" />
-            <p>Nenhuma NR encontrada</p>
+            <p>Nenhuma norma encontrada</p>
           </div>
         )}
       </div>
@@ -145,12 +145,12 @@ export default function NrsPage() {
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-2xl">
-          <DialogHeader><DialogTitle>{editNr ? 'Editar NR' : 'Nova NR'}</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{editNr ? 'Editar Norma' : 'Nova Norma'}</DialogTitle></DialogHeader>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div className="grid grid-cols-3 gap-4">
               <div className="space-y-1">
-                <Label>Número NR *</Label>
-                <Input {...register('numeroNr')} placeholder="NR-10" />
+                <Label>Número da Norma *</Label>
+                <Input {...register('numeroNr')} placeholder="NR-10 ou NBR-5410" />
                 {errors.numeroNr && <p className="text-red-500 text-xs">{errors.numeroNr.message}</p>}
               </div>
               <div className="space-y-1">
@@ -186,7 +186,7 @@ export default function NrsPage() {
               </div>
             </div>
             <Button type="submit" className="w-full bg-blue-700 hover:bg-blue-800" disabled={loading}>
-              {loading ? 'Salvando...' : 'Salvar NR'}
+              {loading ? 'Salvando...' : 'Salvar Norma'}
             </Button>
           </form>
         </DialogContent>
@@ -195,7 +195,7 @@ export default function NrsPage() {
       <Dialog open={deleteId !== null} onOpenChange={open => !open && setDeleteId(null)}>
         <DialogContent className="max-w-sm">
           <DialogHeader>
-            <DialogTitle>Excluir NR</DialogTitle>
+            <DialogTitle>Excluir Norma</DialogTitle>
             <DialogDescription>Esta ação não pode ser desfeita. Deseja continuar?</DialogDescription>
           </DialogHeader>
           <DialogFooter className="gap-2">

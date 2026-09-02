@@ -254,7 +254,7 @@ export function FotoAnnotator({ fotoUrl, fotoId, initialPontos = [], onSave, onC
                   className={`w-full flex items-center gap-1 px-3 py-2 rounded-lg text-sm border transition-colors ${selectedPonto === i ? 'bg-orange-50 border-orange-300' : 'hover:bg-slate-50 border-transparent'}`}>
                   <button className="flex-1 text-left flex items-center" onClick={() => setSelectedPonto(i)}>
                     <span className={`w-5 h-5 ${dot} text-white rounded-full text-xs inline-flex items-center justify-center mr-2 font-bold`}>{p.numero}</span>
-                    {p.nrs.length} NR(s)
+                    {p.nrs.length} norma(s)
                   </button>
                   <button className="text-red-400 hover:text-red-600 shrink-0" title="Remover ponto"
                     onClick={() => removePonto(i)}>
@@ -269,7 +269,7 @@ export function FotoAnnotator({ fotoUrl, fotoId, initialPontos = [], onSave, onC
 
         {selectedPonto !== null && pontos[selectedPonto] && (
           <div className="border rounded-lg p-3">
-            <p className="text-sm font-semibold mb-2">Ponto {pontos[selectedPonto].numero} — NRs</p>
+            <p className="text-sm font-semibold mb-2">Ponto {pontos[selectedPonto].numero} — Normas</p>
 
             {pontos[selectedPonto].nrs.map((nr, ni) => (
               <div key={ni} className="mb-3 p-2 bg-slate-50 rounded-lg">
@@ -291,11 +291,11 @@ export function FotoAnnotator({ fotoUrl, fotoId, initialPontos = [], onSave, onC
             ))}
 
             <div className="mt-2">
-              <Label className="text-xs mb-1 block">Adicionar NR</Label>
+              <Label className="text-xs mb-1 block">Adicionar Norma</Label>
               <select className="w-full text-xs border rounded-md p-2"
                 onChange={e => { if (e.target.value) { addNrToPonto(Number(e.target.value)); e.target.value = '' } }}
                 defaultValue="">
-                <option value="">Selecione uma NR...</option>
+                <option value="">Selecione uma norma...</option>
                 {nrsCatalogo.map(nr => (
                   <option key={nr.id} value={nr.id}>{nr.numeroNr}{nr.artigo ? ` ${nr.artigo}` : ''} — {nr.titulo.slice(0, 40)}</option>
                 ))}

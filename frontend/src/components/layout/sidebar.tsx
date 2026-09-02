@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/button'
 const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/clientes', label: 'Clientes', icon: Users },
-  { href: '/nrs', label: 'Catálogo NRs', icon: Shield },
+  { href: '/nrs', label: 'Catálogo de Normas', icon: Shield },
   { href: '/modelos', label: 'Modelos', icon: BookOpen },
   { href: '/laudos', label: 'Laudos', icon: FileText },
 ]
