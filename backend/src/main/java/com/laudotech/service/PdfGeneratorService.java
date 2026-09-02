@@ -1,5 +1,7 @@
 package com.laudotech.service;
 
+import com.itextpdf.html2pdf.ConverterProperties;
+import com.itextpdf.html2pdf.HtmlConverter;
 import com.itextpdf.io.image.ImageDataFactory;
 import com.itextpdf.kernel.colors.ColorConstants;
 import com.itextpdf.kernel.colors.DeviceRgb;
@@ -300,9 +302,19 @@ public class PdfGeneratorService {
                 case ITENS_CRITICOS -> addItensCriticos(doc, laudo, bold, regular, titulo);
                 default -> {
                     addSectionTitle(doc, titulo, bold);
-                    if (t.getConteudo() != null && !t.getConteudo().isBlank()) {
-                        doc.add(new Paragraph(t.getConteudo()).setFont(regular).setFontSize(11)
-                                .setTextAlignment(TextAlignment.JUSTIFIED).setMarginBottom(15));
+                    if (t.getConteudo() != null && !com.laudotech.util.TextUtils.isHtmlBlank(t.getConteudo())) {
+                        String html = "<style>"
+                                + "p, li { font-family: Times-Roman; font-size: 11pt; text-align: justify; }"
+                                + "h2 { font-family: Times-Bold; font-size: 13pt; }"
+                                + "h3 { font-family: Times-Bold; font-size: 12pt; }"
+                                + "img { max-width: 100%; }"
+                                + "</style>" + t.getConteudo();
+                        for (com.itextpdf.layout.element.IElement element : HtmlConverter.convertToElements(html, new ConverterProperties())) {
+                            if (element instanceof com.itextpdf.layout.element.IBlockElement blockElement) {
+                                doc.add(blockElement);
+                            }
+                        }
+                        doc.add(new Paragraph("\n"));
                     }
                 }
             }
