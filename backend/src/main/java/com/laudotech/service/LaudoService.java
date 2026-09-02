@@ -10,6 +10,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.stream.IntStream;
 
+import static com.laudotech.util.TextUtils.isHtmlBlank;
+
 @Service
 @RequiredArgsConstructor
 public class LaudoService {
@@ -104,7 +106,7 @@ public class LaudoService {
             LaudoTopico.Tipo tipoDto = (t.getTipo() != null && !t.getTipo().isBlank())
                     ? LaudoTopico.Tipo.valueOf(t.getTipo()) : LaudoTopico.Tipo.TEXTO;
             boolean tituloVazio = t.getTitulo() == null || t.getTitulo().isBlank();
-            boolean conteudoVazio = t.getConteudo() == null || t.getConteudo().isBlank();
+            boolean conteudoVazio = isHtmlBlank(t.getConteudo());
             if (tipoDto == LaudoTopico.Tipo.TEXTO && (tituloVazio || conteudoVazio)) {
                 throw new RuntimeException("Título e conteúdo são obrigatórios para todos os tópicos.");
             }

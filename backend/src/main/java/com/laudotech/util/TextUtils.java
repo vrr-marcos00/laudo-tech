@@ -10,4 +10,8 @@ public final class TextUtils {
     public static String upper(String value) {
         return value == null ? null : value.toUpperCase(PT_BR);
     }
+
+    public static boolean isHtmlBlank(String html) {
+        return html == null || html.replaceAll("<[^>]*>", "").isBlank();
+    }
 }
