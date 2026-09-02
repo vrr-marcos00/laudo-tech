@@ -23,6 +23,7 @@ import com.itextpdf.layout.borders.Border;
 import com.itextpdf.layout.borders.SolidBorder;
 import com.itextpdf.layout.element.*;
 import com.itextpdf.layout.properties.*;
+import com.itextpdf.styledxmlparser.resolver.resource.IResourceRetriever;
 import com.laudotech.dto.*;
 import com.laudotech.entity.*;
 import com.laudotech.repository.*;
@@ -309,9 +310,13 @@ public class PdfGeneratorService {
                                 + "h3 { font-family: 'Times New Roman', Times, serif; font-size: 12pt; font-weight: bold; }"
                                 + "img { max-width: 100%; }"
                                 + "</style>" + t.getConteudo();
-                        for (com.itextpdf.layout.element.IElement element : HtmlConverter.convertToElements(html, new ConverterProperties())) {
+                        ConverterProperties topicoProps = new ConverterProperties();
+                        topicoProps.setResourceRetriever(new TopicoImageResourceRetriever());
+                        for (com.itextpdf.layout.element.IElement element : HtmlConverter.convertToElements(html, topicoProps)) {
                             if (element instanceof com.itextpdf.layout.element.IBlockElement blockElement) {
                                 doc.add(blockElement);
+                            } else if (element instanceof com.itextpdf.layout.element.Image img) {
+                                doc.add(img);
                             }
                         }
                         doc.add(new Paragraph("\n"));
@@ -581,6 +586,31 @@ public class PdfGeneratorService {
         } catch (Exception e) {
             log.warn("normalizeFormat falhou, usando bytes originais: {}", e.getMessage());
             return imageBytes;
+        }
+    }
+
+    // Resource retriever used only for topic-content HTML conversion (addTopicos()).
+    // Unlike pdfHTML's default retriever (a raw HTTP GET of whatever <img src> is in the
+    // stored HTML), this only fetches images that belong to this app's own file storage
+    // (via FileStorageService, which resolves through the correctly-configured internal
+    // MinIO/R2 client) and normalizes their format the same way every other image in this
+    // file is normalized. Any URL that isn't recognized as this app's own storage is refused.
+    private class TopicoImageResourceRetriever implements IResourceRetriever {
+        @Override
+        public InputStream getInputStreamByUrl(URL url) {
+            byte[] bytes = getByteArrayByUrl(url);
+            return bytes == null ? null : new ByteArrayInputStream(bytes);
+        }
+
+        @Override
+        public byte[] getByteArrayByUrl(URL url) {
+            String urlStr = url.toString();
+            byte[] raw = fileStorageService.downloadIfOwnUrl(urlStr);
+            if (raw == null) {
+                log.warn("Imagem de tópico recusada ou indisponível (URL fora do storage da aplicação): {}", urlStr);
+                return null;
+            }
+            return normalizeFormat(raw);
         }
     }
 

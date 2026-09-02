@@ -6,9 +6,10 @@ import { ModeloLaudo, ModeloTopico } from '@/types'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent } from '@/components/ui/card'
 import { toast } from '@/components/ui/toaster'
+import { TopicoRichEditor } from '@/components/laudos/topico-rich-editor'
+import { isHtmlEmpty } from '@/lib/html'
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
 import { SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable, arrayMove } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
@@ -26,7 +27,7 @@ function SortableTopico({ topico, index, showErrors, onChange, onRemove }: {
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: topico._key })
   const style = { transform: CSS.Transform.toString(transform), transition }
   const tituloInvalido = showErrors && !topico.titulo.trim()
-  const conteudoInvalido = showErrors && !topico.conteudo.trim()
+  const conteudoInvalido = showErrors && isHtmlEmpty(topico.conteudo)
 
   return (
     <div ref={setNodeRef} style={style} className="mb-3">
@@ -47,12 +48,10 @@ function SortableTopico({ topico, index, showErrors, onChange, onRemove }: {
                 {tituloInvalido && <p className="text-xs text-red-500 mt-1">Título é obrigatório</p>}
               </div>
               <div>
-                <Textarea
+                <TopicoRichEditor
                   value={topico.conteudo}
-                  onChange={e => onChange('conteudo', e.target.value)}
-                  placeholder="Conteúdo do tópico..."
-                  rows={4}
-                  className={conteudoInvalido ? 'border-red-400 focus-visible:ring-red-400' : ''}
+                  onChange={value => onChange('conteudo', value)}
+                  invalid={conteudoInvalido}
                 />
                 {conteudoInvalido && <p className="text-xs text-red-500 mt-1">Conteúdo é obrigatório</p>}
               </div>
@@ -131,7 +130,7 @@ export default function ModeloTopicoEditorPage() {
   }
 
   function topicosInvalidos() {
-    return topicos.filter(t => !t.titulo.trim() || !t.conteudo.trim())
+    return topicos.filter(t => !t.titulo.trim() || isHtmlEmpty(t.conteudo))
   }
 
   async function save() {

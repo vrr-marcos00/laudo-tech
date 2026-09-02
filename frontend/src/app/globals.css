@@ -129,31 +129,49 @@
   }
 }
 
-.laudo-rich-content p {
+.laudo-rich-content p,
+.laudo-rich-editor-content p {
   margin-bottom: 0.75em;
+}
+.laudo-rich-content h2,
+.laudo-rich-editor-content h2 {
+  font-weight: bold;
+  margin: 1em 0 0.5em;
 }
 .laudo-rich-content h2 {
   font-size: 13pt;
+}
+.laudo-rich-editor-content h2 {
+  font-size: 1.3em;
+}
+.laudo-rich-content h3,
+.laudo-rich-editor-content h3 {
   font-weight: bold;
   margin: 1em 0 0.5em;
 }
 .laudo-rich-content h3 {
   font-size: 12pt;
-  font-weight: bold;
-  margin: 1em 0 0.5em;
+}
+.laudo-rich-editor-content h3 {
+  font-size: 1.15em;
 }
 .laudo-rich-content ul,
-.laudo-rich-content ol {
+.laudo-rich-content ol,
+.laudo-rich-editor-content ul,
+.laudo-rich-editor-content ol {
   margin: 0.5em 0 0.75em 1.5em;
   list-style-position: outside;
 }
-.laudo-rich-content ul {
+.laudo-rich-content ul,
+.laudo-rich-editor-content ul {
   list-style-type: disc;
 }
-.laudo-rich-content ol {
+.laudo-rich-content ol,
+.laudo-rich-editor-content ol {
   list-style-type: decimal;
 }
-.laudo-rich-content img {
+.laudo-rich-content img,
+.laudo-rich-editor-content img {
   max-width: 100%;
   margin: 0.75em 0;
 }

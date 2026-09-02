@@ -12,6 +12,6 @@ public final class TextUtils {
     }
 
     public static boolean isHtmlBlank(String html) {
-        return html == null || html.replaceAll("<[^>]*>", "").isBlank();
+        return html == null || (!html.contains("<img") && html.replaceAll("<[^>]*>", "").isBlank());
     }
 }

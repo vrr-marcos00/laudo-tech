@@ -50,6 +50,25 @@ public class FileStorageService {
         }
     }
 
+    /**
+     * Downloads the bytes for {@code url} only if it belongs to this service's own
+     * public storage (i.e. starts with the configured public URL prefix). Returns
+     * {@code null} for any foreign URL (refused) or if the download fails, so callers
+     * that accept arbitrary/untrusted URLs (e.g. free-form HTML) never end up fetching
+     * attacker-controlled hosts.
+     */
+    public byte[] downloadIfOwnUrl(String url) {
+        if (url == null || !url.startsWith(publicUrl + "/")) {
+            return null;
+        }
+        try {
+            return downloadBytes(url);
+        } catch (Exception e) {
+            log.warn("Erro ao baixar imagem propria do storage: {}", e.getMessage());
+            return null;
+        }
+    }
+
     public void delete(String url) {
         try {
             String objectName = url.replace(publicUrl + "/", "");

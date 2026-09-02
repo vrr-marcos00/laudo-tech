@@ -14,7 +14,7 @@ import { Bold, Italic, Underline as UnderlineIcon, List, ListOrdered, Heading2, 
 interface Props {
   value: string
   onChange: (html: string) => void
-  laudoId: number
+  laudoId?: number
   disabled?: boolean
   invalid?: boolean
 }
@@ -23,7 +23,18 @@ export function TopicoRichEditor({ value, onChange, laudoId, disabled, invalid }
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const editor = useEditor({
-    extensions: [StarterKit, Underline, TiptapImage],
+    extensions: [
+      StarterKit.configure({
+        heading: { levels: [2, 3] },
+        blockquote: false,
+        code: false,
+        codeBlock: false,
+        strike: false,
+        horizontalRule: false,
+      }),
+      Underline,
+      TiptapImage,
+    ],
     content: value,
     editable: !disabled,
     immediatelyRender: false,
@@ -36,6 +47,7 @@ export function TopicoRichEditor({ value, onChange, laudoId, disabled, invalid }
   })
 
   async function handleImageFile(file: File) {
+    if (laudoId == null) return
     const form = new FormData()
     form.append('file', file)
     try {
@@ -91,12 +103,16 @@ export function TopicoRichEditor({ value, onChange, laudoId, disabled, invalid }
             onClick={() => editor.chain().focus().toggleOrderedList().run()}>
             <ListOrdered className="w-4 h-4" />
           </Button>
-          <Separator orientation="vertical" className="h-5 mx-1" />
-          <Button type="button" variant="ghost" size="icon-sm" onClick={() => fileInputRef.current?.click()}>
-            <ImagePlus className="w-4 h-4" />
-          </Button>
-          <input ref={fileInputRef} type="file" accept="image/*" className="hidden"
-            onChange={e => { const f = e.target.files?.[0]; if (f) handleImageFile(f); e.target.value = '' }} />
+          {laudoId != null && (
+            <>
+              <Separator orientation="vertical" className="h-5 mx-1" />
+              <Button type="button" variant="ghost" size="icon-sm" onClick={() => fileInputRef.current?.click()}>
+                <ImagePlus className="w-4 h-4" />
+              </Button>
+              <input ref={fileInputRef} type="file" accept="image/*" className="hidden"
+                onChange={e => { const f = e.target.files?.[0]; if (f) handleImageFile(f); e.target.value = '' }} />
+            </>
+          )}
         </div>
       )}
       <EditorContent editor={editor} />

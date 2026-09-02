@@ -1,3 +1,3 @@
 export function isHtmlEmpty(html: string): boolean {
-  return html.replace(/<[^>]*>/g, '').trim().length === 0
+  return !html.includes('<img') && html.replace(/<[^>]*>/g, '').trim().length === 0
 }
