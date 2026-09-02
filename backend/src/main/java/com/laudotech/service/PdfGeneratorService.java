@@ -304,9 +304,9 @@ public class PdfGeneratorService {
                     addSectionTitle(doc, titulo, bold);
                     if (t.getConteudo() != null && !com.laudotech.util.TextUtils.isHtmlBlank(t.getConteudo())) {
                         String html = "<style>"
-                                + "p, li { font-family: Times-Roman; font-size: 11pt; text-align: justify; }"
-                                + "h2 { font-family: Times-Bold; font-size: 13pt; }"
-                                + "h3 { font-family: Times-Bold; font-size: 12pt; }"
+                                + "p, li { font-family: 'Times New Roman', Times, serif; font-size: 11pt; text-align: justify; }"
+                                + "h2 { font-family: 'Times New Roman', Times, serif; font-size: 13pt; font-weight: bold; }"
+                                + "h3 { font-family: 'Times New Roman', Times, serif; font-size: 12pt; font-weight: bold; }"
                                 + "img { max-width: 100%; }"
                                 + "</style>" + t.getConteudo();
                         for (com.itextpdf.layout.element.IElement element : HtmlConverter.convertToElements(html, new ConverterProperties())) {
