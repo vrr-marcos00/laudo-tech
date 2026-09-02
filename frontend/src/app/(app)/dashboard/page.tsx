@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import Link from 'next/link'
 import { Badge } from '@/components/ui/badge'
 import { STATUS_LABELS, STATUS_COLORS } from '@/lib/status'
+import { formatDate } from '@/lib/date'
 
 export default function DashboardPage() {
   const { data: laudos = [] } = useQuery<Laudo[]>({ queryKey: ['laudos'], queryFn: () => api.get('/laudos').then(r => r.data) })
@@ -54,7 +55,7 @@ export default function DashboardPage() {
                 className="flex items-center justify-between p-3 rounded-lg hover:bg-slate-50 transition-colors border border-transparent hover:border-slate-200">
                 <div>
                   <p className="font-medium text-sm">{laudo.clienteNome}</p>
-                  <p className="text-xs text-slate-500">{laudo.engenheiroNome} • {laudo.dataVisita ?? 'Sem data'}</p>
+                  <p className="text-xs text-slate-500">{laudo.engenheiroNome} • {laudo.dataVisita ? formatDate(laudo.dataVisita) : 'Sem data'}</p>
                 </div>
                 <span className={`text-xs font-medium px-2 py-1 rounded-full ${STATUS_COLORS[laudo.status]}`}>
                   {STATUS_LABELS[laudo.status]}

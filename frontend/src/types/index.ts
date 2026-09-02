@@ -115,6 +115,8 @@ export interface Laudo {
   clienteId: number
   clienteNome: string
   clienteCnpj: string | null
+  clienteFotoUrl: string | null
+  clienteDescricao: string | null
   modeloId: number | null
   status: LaudoStatus
   numeroArt: string | null
@@ -126,6 +128,8 @@ export interface Laudo {
   mostrarSumario: boolean
   mostrarAssinaturaEngenheiro: boolean
   mostrarAssinaturaCliente: boolean
+  mostrarCapaEmpresa: boolean
+  mostrarDescricaoEmpresa: boolean
   logoCapaUrl: string | null
   tituloCapa: string | null
   subtituloCapa: string | null

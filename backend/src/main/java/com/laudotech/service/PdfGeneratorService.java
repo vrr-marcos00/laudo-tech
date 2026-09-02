@@ -14,6 +14,8 @@ import com.itextpdf.kernel.pdf.PdfDocument;
 import com.itextpdf.kernel.pdf.PdfPage;
 import com.itextpdf.kernel.pdf.PdfWriter;
 import com.itextpdf.kernel.pdf.canvas.PdfCanvas;
+import com.itextpdf.kernel.pdf.extgstate.PdfExtGState;
+import com.itextpdf.layout.Canvas;
 import com.itextpdf.layout.Document;
 import com.itextpdf.layout.borders.Border;
 import com.itextpdf.layout.borders.SolidBorder;
@@ -89,9 +91,20 @@ public class PdfGeneratorService {
             // Footer handler
             pdf.addEventHandler(PdfDocumentEvent.END_PAGE, new FooterHandler(laudo, fontRegular));
 
+            // Draft watermark (removed automatically once the laudo is finalized)
+            if (laudo.getStatus() != Laudo.Status.FINALIZADO) {
+                pdf.addEventHandler(PdfDocumentEvent.END_PAGE, new WatermarkHandler(fontBold));
+            }
+
             // Cover page (optional)
             if (laudo.isMostrarCapa()) {
                 addCover(doc, laudo, fontBold, fontRegular);
+                doc.add(new AreaBreak(AreaBreakType.NEXT_PAGE));
+            }
+
+            // Company cover page (optional)
+            if (laudo.isMostrarCapaEmpresa()) {
+                addCapaEmpresa(doc, laudo, fontBold, fontRegular);
                 doc.add(new AreaBreak(AreaBreakType.NEXT_PAGE));
             }
 
@@ -103,6 +116,13 @@ public class PdfGeneratorService {
 
             // Identification section
             addIdentificacao(doc, laudo, fontBold, fontRegular);
+
+            // Company description page (optional)
+            if (laudo.isMostrarDescricaoEmpresa()) {
+                doc.add(new AreaBreak(AreaBreakType.NEXT_PAGE));
+                addDescricaoEmpresa(doc, laudo, fontBold, fontRegular);
+                doc.add(new AreaBreak(AreaBreakType.NEXT_PAGE));
+            }
 
             // Topics (includes Registro Fotográfico / Itens Críticos wherever the user placed them)
             addTopicos(doc, laudo, fontBold, fontRegular);
@@ -180,6 +200,52 @@ public class PdfGeneratorService {
         if (laudo.getCliente().getCidade() != null && laudo.getDataEmissao() != null) {
             doc.add(new Paragraph(laudo.getCliente().getCidade() + ", " + laudo.getDataEmissao().format(DATE_FMT))
                     .setFont(regular).setFontSize(11).setTextAlignment(TextAlignment.CENTER));
+        }
+    }
+
+    private void addCapaEmpresa(Document doc, Laudo laudo, PdfFont bold, PdfFont regular) throws IOException {
+        String fotoUrl = laudo.getCliente().getFotoUrl();
+        if (fotoUrl != null) {
+            try {
+                byte[] fotoBytes = fileStorageService.downloadBytes(fotoUrl);
+                byte[] fotoNorm = normalizeFormat(fotoBytes);
+                Image foto = new Image(ImageDataFactory.create(fotoNorm));
+                foto.setWidth(200).setHorizontalAlignment(HorizontalAlignment.CENTER);
+                doc.add(foto);
+            } catch (Exception e) {
+                log.warn("Não foi possível carregar a foto da empresa: {}", e.getMessage());
+            }
+        }
+
+        doc.add(new Paragraph("\n\n"));
+
+        doc.add(new Paragraph(laudo.getCliente().getNome().toUpperCase())
+                .setFont(bold).setFontSize(20).setFontColor(PRIMARY_COLOR)
+                .setTextAlignment(TextAlignment.CENTER));
+    }
+
+    private void addDescricaoEmpresa(Document doc, Laudo laudo, PdfFont bold, PdfFont regular) throws IOException {
+        String logoUrl = laudo.getCliente().getFotoUrl();
+        if (logoUrl != null) {
+            try {
+                byte[] logoBytes = fileStorageService.downloadBytes(logoUrl);
+                byte[] logoNorm = normalizeFormat(logoBytes);
+                Image logo = new Image(ImageDataFactory.create(logoNorm));
+                logo.setWidth(140).setHorizontalAlignment(HorizontalAlignment.CENTER);
+                doc.add(logo);
+            } catch (Exception e) {
+                log.warn("Não foi possível carregar a foto da empresa: {}", e.getMessage());
+            }
+        }
+
+        doc.add(new Paragraph(laudo.getCliente().getNome())
+                .setFont(bold).setFontSize(16).setFontColor(PRIMARY_COLOR)
+                .setTextAlignment(TextAlignment.CENTER).setMarginTop(16).setMarginBottom(16));
+
+        String descricao = laudo.getCliente().getDescricao();
+        if (descricao != null && !descricao.isBlank()) {
+            doc.add(new Paragraph(descricao)
+                    .setFont(regular).setFontSize(11));
         }
     }
 
@@ -596,6 +662,36 @@ public class PdfGeneratorService {
                     .showText("Página " + pageNum)
                     .endText()
                     .release();
+        }
+    }
+
+    private static class WatermarkHandler implements IEventHandler {
+        private final PdfFont font;
+
+        WatermarkHandler(PdfFont font) {
+            this.font = font;
+        }
+
+        @Override
+        public void handleEvent(Event event) {
+            PdfDocumentEvent docEvent = (PdfDocumentEvent) event;
+            PdfDocument pdf = docEvent.getDocument();
+            PdfPage page = docEvent.getPage();
+            Rectangle rect = page.getPageSize();
+            float centerX = (rect.getLeft() + rect.getRight()) / 2;
+            float centerY = (rect.getBottom() + rect.getTop()) / 2;
+
+            PdfCanvas pdfCanvas = new PdfCanvas(page.newContentStreamBefore(), page.getResources(), pdf);
+            PdfExtGState gs = new PdfExtGState().setFillOpacity(0.15f);
+            pdfCanvas.saveState().setExtGState(gs);
+
+            Canvas canvas = new Canvas(pdfCanvas, rect);
+            canvas.showTextAligned(new Paragraph("RASCUNHO").setFont(font).setFontSize(72)
+                            .setFontColor(new DeviceRgb(150, 150, 150)),
+                    centerX, centerY, pdf.getPageNumber(page), TextAlignment.CENTER, VerticalAlignment.MIDDLE, (float) (Math.PI / 4));
+            canvas.close();
+
+            pdfCanvas.restoreState().release();
         }
     }
 }

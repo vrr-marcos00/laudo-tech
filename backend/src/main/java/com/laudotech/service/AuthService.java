@@ -6,6 +6,7 @@ import com.laudotech.dto.LoginRequest;
 import com.laudotech.dto.LoginResponse;
 import com.laudotech.entity.Engenheiro;
 import com.laudotech.repository.EngenheiroRepository;
+import static com.laudotech.util.TextUtils.upper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -34,11 +35,11 @@ public class AuthService {
             throw new RuntimeException("Já existe uma conta com este e-mail.");
         }
         Engenheiro eng = Engenheiro.builder()
-                .nome(req.getNome())
-                .crea(req.getCrea())
-                .tituloProfissional(req.getTituloProfissional())
+                .nome(upper(req.getNome()))
+                .crea(upper(req.getCrea()))
+                .tituloProfissional(upper(req.getTituloProfissional()))
                 .email(req.getEmail())
-                .telefone(req.getTelefone())
+                .telefone(upper(req.getTelefone()))
                 .senhaHash(passwordEncoder.encode(req.getSenha()))
                 .ativo(true)
                 .build();

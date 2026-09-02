@@ -12,6 +12,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { LoginResponse } from '@/types'
+import { maskTelefone } from '@/lib/masks'
 
 const schema = z.object({
   nome: z.string().min(1, 'Nome obrigatório'),
@@ -81,7 +82,7 @@ export default function CadastroPage() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="telefone">Telefone</Label>
-              <Input id="telefone" {...register('telefone')} placeholder="(11) 99999-9999" />
+              <Input id="telefone" {...register('telefone', { onChange: e => { e.target.value = maskTelefone(e.target.value) } })} placeholder="(11) 99999-9999" />
             </div>
             <div className="space-y-2">
               <Label htmlFor="senha">Senha *</Label>

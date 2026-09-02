@@ -72,6 +72,8 @@ public class LaudoService {
         if (req.getMostrarSumario() != null) laudo.setMostrarSumario(req.getMostrarSumario());
         if (req.getMostrarAssinaturaEngenheiro() != null) laudo.setMostrarAssinaturaEngenheiro(req.getMostrarAssinaturaEngenheiro());
         if (req.getMostrarAssinaturaCliente() != null) laudo.setMostrarAssinaturaCliente(req.getMostrarAssinaturaCliente());
+        if (req.getMostrarCapaEmpresa() != null) laudo.setMostrarCapaEmpresa(req.getMostrarCapaEmpresa());
+        if (req.getMostrarDescricaoEmpresa() != null) laudo.setMostrarDescricaoEmpresa(req.getMostrarDescricaoEmpresa());
         if (req.getTituloCapa() != null) laudo.setTituloCapa(req.getTituloCapa());
         if (req.getSubtituloCapa() != null) laudo.setSubtituloCapa(req.getSubtituloCapa());
         return toDto(laudoRepo.save(laudo));
@@ -189,6 +191,8 @@ public class LaudoService {
                 .mostrarSumario(origem.isMostrarSumario())
                 .mostrarAssinaturaEngenheiro(origem.isMostrarAssinaturaEngenheiro())
                 .mostrarAssinaturaCliente(origem.isMostrarAssinaturaCliente())
+                .mostrarCapaEmpresa(origem.isMostrarCapaEmpresa())
+                .mostrarDescricaoEmpresa(origem.isMostrarDescricaoEmpresa())
                 .logoCapaUrl(origem.getLogoCapaUrl())
                 .tituloCapa(origem.getTituloCapa())
                 .subtituloCapa(origem.getSubtituloCapa())
@@ -271,14 +275,6 @@ public class LaudoService {
         }
     }
 
-    public void assertFinalizado(Long laudoId, Engenheiro authEng) {
-        Laudo laudo = laudoRepo.findById(laudoId).orElseThrow(() -> new RuntimeException("Laudo não encontrado"));
-        assertAcesso(laudo, authEng);
-        if (laudo.getStatus() != Status.FINALIZADO) {
-            throw new RuntimeException("O laudo precisa estar finalizado para gerar o PDF para download.");
-        }
-    }
-
     public void assertAcesso(Long laudoId, Engenheiro authEng) {
         Laudo laudo = laudoRepo.findById(laudoId).orElseThrow(() -> new RuntimeException("Laudo não encontrado"));
         assertAcesso(laudo, authEng);
@@ -305,6 +301,8 @@ public class LaudoService {
                 .clienteId(l.getCliente().getId())
                 .clienteNome(l.getCliente().getNome())
                 .clienteCnpj(l.getCliente().getCnpj())
+                .clienteFotoUrl(l.getCliente().getFotoUrl())
+                .clienteDescricao(l.getCliente().getDescricao())
                 .modeloId(l.getModelo() != null ? l.getModelo().getId() : null)
                 .status(l.getStatus().name())
                 .numeroArt(l.getNumeroArt())
@@ -316,6 +314,8 @@ public class LaudoService {
                 .mostrarSumario(l.isMostrarSumario())
                 .mostrarAssinaturaEngenheiro(l.isMostrarAssinaturaEngenheiro())
                 .mostrarAssinaturaCliente(l.isMostrarAssinaturaCliente())
+                .mostrarCapaEmpresa(l.isMostrarCapaEmpresa())
+                .mostrarDescricaoEmpresa(l.isMostrarDescricaoEmpresa())
                 .logoCapaUrl(l.getLogoCapaUrl())
                 .tituloCapa(l.getTituloCapa())
                 .subtituloCapa(l.getSubtituloCapa())

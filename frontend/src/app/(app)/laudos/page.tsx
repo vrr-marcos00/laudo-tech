@@ -12,6 +12,7 @@ import { Plus, FileText, Calendar, User, Trash2 } from 'lucide-react'
 import Link from 'next/link'
 import { STATUS_LABELS, STATUS_COLORS } from '@/lib/status'
 import { Pagination, paginate } from '@/components/ui/pagination'
+import { formatDate } from '@/lib/date'
 
 export default function LaudosPage() {
   const qc = useQueryClient()
@@ -87,7 +88,7 @@ export default function LaudosPage() {
                       <p className="text-sm text-slate-500">{l.clienteCnpj}</p>
                       <div className="flex items-center gap-4 mt-2 text-xs text-slate-400">
                         <span className="flex items-center gap-1"><User className="w-3 h-3" />{l.engenheiroNome}</span>
-                        {l.dataVisita && <span className="flex items-center gap-1"><Calendar className="w-3 h-3" />{l.dataVisita}</span>}
+                        {l.dataVisita && <span className="flex items-center gap-1"><Calendar className="w-3 h-3" />{formatDate(l.dataVisita)}</span>}
                         {l.numeroArt && <span>ART: {l.numeroArt}</span>}
                       </div>
                     </div>

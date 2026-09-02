@@ -5,9 +5,9 @@ import { useParams } from 'next/navigation'
 import api from '@/lib/api'
 import { Laudo, AreaInspecao } from '@/types'
 import { Button } from '@/components/ui/button'
-import { toast } from '@/components/ui/toaster'
 import { ArrowLeft, Download } from 'lucide-react'
 import Link from 'next/link'
+import { formatDate } from '@/lib/date'
 
 const PRIORITY_COLORS: Record<string, string> = {
   CRITICO: '#dc2626', ALTO: '#ea580c', MEDIO: '#ca8a04', BAIXO: '#2563eb'
@@ -38,10 +38,6 @@ export default function LaudoPreviewPage() {
   })
 
   async function downloadPdf() {
-    if (laudo?.status !== 'FINALIZADO') {
-      toast.add({ title: 'O PDF só fica disponível depois que o laudo é finalizado.', type: 'info' })
-      return
-    }
     const res = await api.get(`/laudos/${id}/pdf`, { responseType: 'blob' })
     const url = URL.createObjectURL(res.data)
     const a = document.createElement('a'); a.href = url; a.download = `laudo-${id}.pdf`; a.click()
@@ -67,9 +63,7 @@ export default function LaudoPreviewPage() {
           <ArrowLeft className="w-4 h-4" /> Voltar ao Editor
         </Link>
         <div className="flex gap-2">
-          <Button size="sm" className={`bg-blue-700 hover:bg-blue-800 ${laudo.status !== 'FINALIZADO' ? 'opacity-50' : ''}`}
-            onClick={downloadPdf}
-            title={laudo.status === 'FINALIZADO' ? undefined : 'Finalize o laudo para poder baixar o PDF'}>
+          <Button size="sm" className="bg-blue-700 hover:bg-blue-800" onClick={downloadPdf}>
             <Download className="w-4 h-4 mr-2" /> Baixar PDF
           </Button>
         </div>
@@ -99,8 +93,20 @@ export default function LaudoPreviewPage() {
               <div style={{ marginTop: 64 }}>
                 <p style={{ fontWeight: 'bold' }}>RESPONSÁVEL TÉCNICO: {laudo.engenheiroNome}</p>
                 <p>REGISTRO CREA: {laudo.engenheiroCrea}</p>
-                {laudo.dataEmissao && <p style={{ marginTop: 8 }}>{laudo.dataEmissao}</p>}
+                {laudo.dataEmissao && <p style={{ marginTop: 8 }}>{formatDate(laudo.dataEmissao)}</p>}
               </div>
+            </div>
+          )}
+
+          {/* === CAPA EMPRESA === */}
+          {laudo.mostrarCapaEmpresa && (
+            <div style={{ minHeight: '100vh', padding: '2cm', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', pageBreakAfter: 'always' }}>
+              {laudo.clienteFotoUrl && (
+                <img src={laudo.clienteFotoUrl} alt="" style={{ maxHeight: 220, marginBottom: 24 }} />
+              )}
+              <h1 style={{ fontSize: '20pt', fontWeight: 'bold', color: '#00467f' }}>
+                {laudo.clienteNome.toUpperCase()}
+              </h1>
             </div>
           )}
 
@@ -122,7 +128,7 @@ export default function LaudoPreviewPage() {
             <InfoTable rows={[
               ['NOME DA EMPRESA', laudo.clienteNome],
               laudo.clienteCnpj ? ['CNPJ', laudo.clienteCnpj] : null,
-              laudo.dataVisita ? ['DATA DE VISITA', laudo.dataVisita] : null,
+              laudo.dataVisita ? ['DATA DE VISITA', formatDate(laudo.dataVisita)] : null,
               laudo.numeroArt ? ['NÚMERO ART', laudo.numeroArt] : null,
               laudo.quemAcompanhou ? ['ACOMPANHOU A VISITA', laudo.quemAcompanhou] : null,
             ].filter(Boolean) as [string, string][]} />
@@ -133,6 +139,19 @@ export default function LaudoPreviewPage() {
               ['CREA', laudo.engenheiroCrea],
             ]} />
           </div>
+
+          {/* === DESCRIÇÃO EMPRESA === */}
+          {laudo.mostrarDescricaoEmpresa && (
+            <div style={{ padding: '2cm', pageBreakAfter: 'always' }}>
+              {laudo.clienteFotoUrl && (
+                <img src={laudo.clienteFotoUrl} alt="" style={{ maxHeight: 160, display: 'block', margin: '0 auto 16px' }} />
+              )}
+              <h2 style={{ fontSize: '16pt', fontWeight: 'bold', color: '#00467f', textAlign: 'center', marginBottom: 16 }}>
+                {laudo.clienteNome}
+              </h2>
+              {laudo.clienteDescricao && <p>{laudo.clienteDescricao}</p>}
+            </div>
+          )}
 
           {/* === TÓPICOS (inclui Registro Fotográfico / Itens Críticos na posição escolhida pelo usuário) === */}
           {(laudo.topicos ?? []).map((t, i) => {
@@ -269,14 +288,14 @@ export default function LaudoPreviewPage() {
                   <div style={{ borderTop: '1px solid black', width: 240, paddingTop: 8 }}>
                     <p style={{ fontWeight: 'bold' }}>{laudo.engenheiroNome}</p>
                     <p>{laudo.engenheiroCrea}</p>
-                    {laudo.dataEmissao && <p>{laudo.dataEmissao}</p>}
+                    {laudo.dataEmissao && <p>{formatDate(laudo.dataEmissao)}</p>}
                   </div>
                 )}
                 {laudo.mostrarAssinaturaCliente && (
                   <div style={{ borderTop: '1px solid black', width: 240, paddingTop: 8 }}>
                     <p style={{ fontWeight: 'bold' }}>{laudo.clienteNome}</p>
                     {laudo.clienteCnpj && <p>{laudo.clienteCnpj}</p>}
-                    {laudo.dataEmissao && <p>{laudo.dataEmissao}</p>}
+                    {laudo.dataEmissao && <p>{formatDate(laudo.dataEmissao)}</p>}
                   </div>
                 )}
               </div>

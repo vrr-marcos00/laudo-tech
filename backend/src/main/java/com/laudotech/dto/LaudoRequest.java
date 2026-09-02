@@ -16,6 +16,8 @@ public class LaudoRequest {
     private Boolean mostrarSumario;
     private Boolean mostrarAssinaturaEngenheiro;
     private Boolean mostrarAssinaturaCliente;
+    private Boolean mostrarCapaEmpresa;
+    private Boolean mostrarDescricaoEmpresa;
     private String tituloCapa;
     private String subtituloCapa;
 }

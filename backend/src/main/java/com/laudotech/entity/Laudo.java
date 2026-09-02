@@ -81,6 +81,14 @@ public class Laudo {
     @Builder.Default
     private boolean mostrarAssinaturaCliente = false;
 
+    @Column(name = "mostrar_capa_empresa")
+    @Builder.Default
+    private boolean mostrarCapaEmpresa = false;
+
+    @Column(name = "mostrar_descricao_empresa")
+    @Builder.Default
+    private boolean mostrarDescricaoEmpresa = false;
+
     @Column(name = "logo_capa_url")
     private String logoCapaUrl;
 

@@ -23,7 +23,7 @@ public class PdfController {
 
     @GetMapping("/{id}/pdf")
     public ResponseEntity<byte[]> downloadPdf(@PathVariable Long id) {
-        laudoService.assertFinalizado(id, auth());
+        laudoService.assertAcesso(id, auth());
         byte[] pdf = pdfService.generate(id);
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"laudo-" + id + ".pdf\"")

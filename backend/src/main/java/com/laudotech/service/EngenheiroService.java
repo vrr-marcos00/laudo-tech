@@ -4,6 +4,7 @@ import com.laudotech.dto.EngenheiroDto;
 import com.laudotech.dto.EngenheiroRequest;
 import com.laudotech.entity.Engenheiro;
 import com.laudotech.repository.EngenheiroRepository;
+import static com.laudotech.util.TextUtils.upper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -23,10 +24,10 @@ public class EngenheiroService {
 
     public EngenheiroDto atualizar(Long id, EngenheiroRequest req, Engenheiro authEng) {
         Engenheiro eng = assertAcesso(id, authEng);
-        eng.setNome(req.getNome());
-        eng.setCrea(req.getCrea());
-        eng.setTituloProfissional(req.getTituloProfissional());
-        eng.setTelefone(req.getTelefone());
+        eng.setNome(upper(req.getNome()));
+        eng.setCrea(upper(req.getCrea()));
+        eng.setTituloProfissional(upper(req.getTituloProfissional()));
+        eng.setTelefone(upper(req.getTelefone()));
         if (req.getSenha() != null && !req.getSenha().isBlank()) {
             eng.setSenhaHash(passwordEncoder.encode(req.getSenha()));
         }

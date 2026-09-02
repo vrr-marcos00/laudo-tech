@@ -16,6 +16,7 @@ import { useParams } from 'next/navigation'
 import { useRef } from 'react'
 import { STATUS_LABELS, STATUS_COLORS } from '@/lib/status'
 import { Pagination, paginate } from '@/components/ui/pagination'
+import { formatDate } from '@/lib/date'
 
 export default function ClienteDetailPage() {
   const { id } = useParams()
@@ -150,7 +151,7 @@ export default function ClienteDetailPage() {
                           className="flex items-center justify-between p-3 rounded-lg border hover:bg-slate-50 transition-colors">
                           <div>
                             <p className="text-sm font-medium">{l.engenheiroNome}</p>
-                            <p className="text-xs text-slate-500">{l.dataVisita ?? 'Sem data'} • ART: {l.numeroArt ?? 'N/A'}</p>
+                            <p className="text-xs text-slate-500">{l.dataVisita ? formatDate(l.dataVisita) : 'Sem data'} • ART: {l.numeroArt ?? 'N/A'}</p>
                           </div>
                           <span className={`text-xs font-medium px-2 py-1 rounded-full ${STATUS_COLORS[l.status]}`}>{STATUS_LABELS[l.status]}</span>
                         </Link>

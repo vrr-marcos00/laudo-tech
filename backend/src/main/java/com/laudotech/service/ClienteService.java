@@ -6,6 +6,7 @@ import com.laudotech.entity.Cliente;
 import com.laudotech.entity.Engenheiro;
 import com.laudotech.repository.ClienteRepository;
 import com.laudotech.repository.LaudoRepository;
+import static com.laudotech.util.TextUtils.upper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -43,10 +44,10 @@ public class ClienteService {
         }
 
         Cliente c = Cliente.builder()
-                .engenheiro(authEng).cnpj(req.getCnpj()).nome(req.getNome())
+                .engenheiro(authEng).cnpj(req.getCnpj()).nome(upper(req.getNome()))
                 .descricao(req.getDescricao()).email(req.getEmail())
-                .telefone(req.getTelefone()).endereco(req.getEndereco())
-                .cidade(req.getCidade()).estado(req.getEstado()).cep(req.getCep())
+                .telefone(upper(req.getTelefone())).endereco(upper(req.getEndereco()))
+                .cidade(upper(req.getCidade())).estado(upper(req.getEstado())).cep(upper(req.getCep()))
                 .build();
         return toDto(repo.save(c));
     }
@@ -54,9 +55,9 @@ public class ClienteService {
     public ClienteDto atualizar(Long id, ClienteRequest req, Engenheiro authEng) {
         Cliente c = repo.findById(id).orElseThrow(() -> new RuntimeException("Cliente não encontrado"));
         assertAcesso(c, authEng);
-        c.setCnpj(req.getCnpj()); c.setNome(req.getNome()); c.setDescricao(req.getDescricao());
-        c.setEmail(req.getEmail()); c.setTelefone(req.getTelefone()); c.setEndereco(req.getEndereco());
-        c.setCidade(req.getCidade()); c.setEstado(req.getEstado()); c.setCep(req.getCep());
+        c.setCnpj(req.getCnpj()); c.setNome(upper(req.getNome())); c.setDescricao(req.getDescricao());
+        c.setEmail(req.getEmail()); c.setTelefone(upper(req.getTelefone())); c.setEndereco(upper(req.getEndereco()));
+        c.setCidade(upper(req.getCidade())); c.setEstado(upper(req.getEstado())); c.setCep(upper(req.getCep()));
         return toDto(repo.save(c));
     }
 

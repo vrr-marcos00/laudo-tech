@@ -13,6 +13,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { HardHat, Mail, Phone, Image as ImageIcon, Edit } from 'lucide-react'
+import { maskTelefone } from '@/lib/masks'
 
 const schema = z.object({
   nome: z.string().min(1, 'Nome obrigatório'),
@@ -130,7 +131,7 @@ export default function PerfilPage() {
               </div>
               <div className="space-y-1">
                 <Label>Telefone</Label>
-                <Input {...register('telefone')} />
+                <Input {...register('telefone', { onChange: e => { e.target.value = maskTelefone(e.target.value) } })} />
               </div>
               <div className="col-span-2 space-y-1">
                 <Label>Nova Senha (deixe em branco para manter)</Label>

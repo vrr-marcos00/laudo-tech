@@ -20,6 +20,7 @@ import { ArrowLeft, Eye, Download, CheckCircle2, GitBranch, Lock, Plus, GripVert
 import Link from 'next/link'
 import { AreasFotosTab } from '@/components/laudos/areas-fotos-tab'
 import { STATUS_LABELS, STATUS_COLORS } from '@/lib/status'
+import { formatDate } from '@/lib/date'
 
 type TopicoWithKey = LaudoTopico & { _key: string }
 
@@ -224,10 +225,6 @@ export default function LaudoEditorPage() {
   }
 
   async function downloadPdf() {
-    if (!readOnly) {
-      toast.add({ title: 'O PDF só fica disponível depois que o laudo é finalizado.', type: 'info' })
-      return
-    }
     const res = await api.get(`/laudos/${id}/pdf`, { responseType: 'blob' })
     const url = URL.createObjectURL(res.data)
     const a = document.createElement('a'); a.href = url; a.download = `laudo-${id}.pdf`; a.click()
@@ -245,6 +242,8 @@ export default function LaudoEditorPage() {
       mostrarSumario: laudo!.mostrarSumario,
       mostrarAssinaturaEngenheiro: laudo!.mostrarAssinaturaEngenheiro,
       mostrarAssinaturaCliente: laudo!.mostrarAssinaturaCliente,
+      mostrarCapaEmpresa: laudo!.mostrarCapaEmpresa,
+      mostrarDescricaoEmpresa: laudo!.mostrarDescricaoEmpresa,
     }
   }
 
@@ -269,6 +268,18 @@ export default function LaudoEditorPage() {
   async function toggleAssinaturaCliente(value: boolean) {
     qc.setQueryData(['laudo', id], (old: Laudo) => ({ ...old, mostrarAssinaturaCliente: value }))
     const { data } = await api.put(`/laudos/${id}`, { ...laudoBasePayload(), mostrarAssinaturaCliente: value })
+    qc.setQueryData(['laudo', id], data)
+  }
+
+  async function toggleCapaEmpresa(value: boolean) {
+    qc.setQueryData(['laudo', id], (old: Laudo) => ({ ...old, mostrarCapaEmpresa: value }))
+    const { data } = await api.put(`/laudos/${id}`, { ...laudoBasePayload(), mostrarCapaEmpresa: value })
+    qc.setQueryData(['laudo', id], data)
+  }
+
+  async function toggleDescricaoEmpresa(value: boolean) {
+    qc.setQueryData(['laudo', id], (old: Laudo) => ({ ...old, mostrarDescricaoEmpresa: value }))
+    const { data } = await api.put(`/laudos/${id}`, { ...laudoBasePayload(), mostrarDescricaoEmpresa: value })
     qc.setQueryData(['laudo', id], data)
   }
 
@@ -310,7 +321,7 @@ export default function LaudoEditorPage() {
           <Link href="/laudos" className="text-slate-500 hover:text-slate-700"><ArrowLeft className="w-5 h-5" /></Link>
           <div>
             <h1 className="text-xl font-bold text-slate-800">{laudo.clienteNome}</h1>
-            <p className="text-sm text-slate-500">{laudo.engenheiroNome} • {laudo.dataVisita ?? 'Sem data de visita'}</p>
+            <p className="text-sm text-slate-500">{laudo.engenheiroNome} • {laudo.dataVisita ? formatDate(laudo.dataVisita) : 'Sem data de visita'}</p>
           </div>
           <span className={`text-xs font-medium px-3 py-1 rounded-full ${STATUS_COLORS[laudo.status]}`}>
             {STATUS_LABELS[laudo.status]}
@@ -341,9 +352,7 @@ export default function LaudoEditorPage() {
           <Link href={`/laudos/${id}/preview`}>
             <Button variant="outline"><Eye className="w-4 h-4 mr-2" /> Preview</Button>
           </Link>
-          <Button variant="outline" onClick={downloadPdf}
-            className={!readOnly ? 'opacity-50' : undefined}
-            title={readOnly ? undefined : 'Finalize o laudo para poder baixar o PDF'}>
+          <Button variant="outline" onClick={downloadPdf}>
             <Download className="w-4 h-4 mr-2" /> PDF
           </Button>
         </div>
@@ -384,8 +393,8 @@ export default function LaudoEditorPage() {
                 <InfoRow label="Engenheiro" value={`${laudo.engenheiroNome} — ${laudo.engenheiroCrea}`} />
                 <InfoRow label="Número ART" value={laudo.numeroArt ?? '—'} />
                 <InfoRow label="Versão" value={String(laudo.versao)} />
-                <InfoRow label="Data da Visita" value={laudo.dataVisita ?? '—'} />
-                <InfoRow label="Data de Emissão" value={laudo.dataEmissao ?? '—'} />
+                <InfoRow label="Data da Visita" value={laudo.dataVisita ? formatDate(laudo.dataVisita) : '—'} />
+                <InfoRow label="Data de Emissão" value={laudo.dataEmissao ? formatDate(laudo.dataEmissao) : '—'} />
                 <div className="col-span-2">
                   <InfoRow label="Quem acompanhou" value={laudo.quemAcompanhou ?? '—'} />
                 </div>
@@ -468,6 +477,20 @@ export default function LaudoEditorPage() {
                     <p className="text-xs text-slate-500">Página de sumário com índice das seções</p>
                   </div>
                   <Switch checked={laudo.mostrarSumario} onCheckedChange={toggleSumario} disabled={readOnly} />
+                </div>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-medium text-sm">Incluir Capa Empresa</p>
+                    <p className="text-xs text-slate-500">Página com a foto e o nome do cliente, logo após a capa principal</p>
+                  </div>
+                  <Switch checked={laudo.mostrarCapaEmpresa} onCheckedChange={toggleCapaEmpresa} disabled={readOnly} />
+                </div>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-medium text-sm">Incluir Descrição Empresa</p>
+                    <p className="text-xs text-slate-500">Página com a foto e a descrição do cliente, logo após a Identificação da Empresa</p>
+                  </div>
+                  <Switch checked={laudo.mostrarDescricaoEmpresa} onCheckedChange={toggleDescricaoEmpresa} disabled={readOnly} />
                 </div>
               </CardContent>
             </Card>

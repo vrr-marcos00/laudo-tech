@@ -15,6 +15,8 @@ public class LaudoDto {
     private Long clienteId;
     private String clienteNome;
     private String clienteCnpj;
+    private String clienteFotoUrl;
+    private String clienteDescricao;
     private Long modeloId;
     private String status;
     private String numeroArt;
@@ -28,6 +30,8 @@ public class LaudoDto {
     private boolean mostrarSumario;
     private boolean mostrarAssinaturaEngenheiro;
     private boolean mostrarAssinaturaCliente;
+    private boolean mostrarCapaEmpresa;
+    private boolean mostrarDescricaoEmpresa;
     private String logoCapaUrl;
     private String tituloCapa;
     private String subtituloCapa;

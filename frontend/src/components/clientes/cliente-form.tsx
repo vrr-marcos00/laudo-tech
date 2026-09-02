@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Cliente } from '@/types'
+import { maskCep, maskCpfCnpj, maskTelefone } from '@/lib/masks'
 
 const schema = z.object({
   nome: z.string().min(1, 'Nome obrigatório'),
@@ -44,7 +45,7 @@ export function ClienteForm({ defaultValues, onSubmit, loading }: Props) {
         </div>
         <div className="space-y-1">
           <Label>CNPJ</Label>
-          <Input {...register('cnpj')} placeholder="00.000.000/0001-00" />
+          <Input {...register('cnpj', { onChange: e => { e.target.value = maskCpfCnpj(e.target.value) } })} placeholder="00.000.000/0001-00" />
         </div>
         <div className="space-y-1">
           <Label>Email</Label>
@@ -53,11 +54,11 @@ export function ClienteForm({ defaultValues, onSubmit, loading }: Props) {
         </div>
         <div className="space-y-1">
           <Label>Telefone</Label>
-          <Input {...register('telefone')} placeholder="(11) 99999-9999" />
+          <Input {...register('telefone', { onChange: e => { e.target.value = maskTelefone(e.target.value) } })} placeholder="(11) 99999-9999" />
         </div>
         <div className="space-y-1">
           <Label>CEP</Label>
-          <Input {...register('cep')} placeholder="00000-000" />
+          <Input {...register('cep', { onChange: e => { e.target.value = maskCep(e.target.value) } })} placeholder="00000-000" />
         </div>
         <div className="col-span-2 space-y-1">
           <Label>Endereço</Label>
