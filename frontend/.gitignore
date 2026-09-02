@@ -3,6 +3,10 @@
 # dependencies
 /node_modules
 /.pnp
+
+# gerado localmente com o proxy npm corporativo (aponta para host interno) -
+# nunca deve ser commitado; a Vercel gera o dela propria a partir do .npmrc publico
+/package-lock.json
 .pnp.*
 .yarn/*
 !.yarn/patches
