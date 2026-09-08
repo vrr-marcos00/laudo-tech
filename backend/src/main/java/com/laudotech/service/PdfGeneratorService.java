@@ -27,6 +27,7 @@ import com.itextpdf.styledxmlparser.resolver.resource.IResourceRetriever;
 import com.laudotech.dto.*;
 import com.laudotech.entity.*;
 import com.laudotech.repository.*;
+import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -39,7 +40,10 @@ import java.awt.FontMetrics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -47,6 +51,11 @@ import java.io.InputStream;
 import java.net.URL;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import javax.imageio.ImageIO;
 
 @Service
@@ -59,6 +68,21 @@ public class PdfGeneratorService {
     private final FotoService fotoService;
     private final LaudoService laudoService;
     private final FileStorageService fileStorageService;
+
+    // Photo/topic-image download + re-encode is the slow part of PDF generation
+    // (network round-trip to storage + ImageIO work). Reports with many photos
+    // used to fetch them one at a time, which could take long enough to exceed
+    // the hosting platform's request timeout. This pool lets that work happen
+    // concurrently; PDF assembly itself still happens single-threaded below.
+    private final ExecutorService imageExecutor = Executors.newFixedThreadPool(8);
+
+    private static final Pattern IMG_SRC_PATTERN =
+            Pattern.compile("<img[^>]+src=[\"']([^\"']+)[\"']", Pattern.CASE_INSENSITIVE);
+
+    @PreDestroy
+    void shutdownImageExecutor() {
+        imageExecutor.shutdown();
+    }
 
     private static final float MARGIN = 56.7f; // 2cm in points
     private static final DeviceRgb PRIMARY_COLOR = new DeviceRgb(0, 70, 127);
@@ -309,6 +333,7 @@ public class PdfGeneratorService {
 
     private void addTopicos(Document doc, Laudo laudo, PdfFont bold, PdfFont regular) {
         List<LaudoTopico> topicos = laudo.getTopicos();
+        Map<String, byte[]> topicImageCache = prefetchTopicImages(topicos);
         for (int i = 0; i < topicos.size(); i++) {
             LaudoTopico t = topicos.get(i);
             String titulo = (i + 2) + ". " + t.getTitulo().toUpperCase();
@@ -325,7 +350,7 @@ public class PdfGeneratorService {
                                 + "img { max-width: 100%; }"
                                 + "</style>" + t.getConteudo();
                         ConverterProperties topicoProps = new ConverterProperties();
-                        topicoProps.setResourceRetriever(new TopicoImageResourceRetriever());
+                        topicoProps.setResourceRetriever(new TopicoImageResourceRetriever(topicImageCache));
                         for (com.itextpdf.layout.element.IElement element : HtmlConverter.convertToElements(html, topicoProps)) {
                             if (element instanceof com.itextpdf.layout.element.IBlockElement blockElement) {
                                 doc.add(blockElement);
@@ -340,10 +365,37 @@ public class PdfGeneratorService {
         }
     }
 
+    // Scans every topic's stored HTML for <img src="..."> occurrences up front and
+    // downloads/normalizes them all concurrently, so the (synchronous, one-image-at-a-time)
+    // HtmlConverter parsing below can read from this cache instead of paying network
+    // latency per image. Any URL missed by the regex still falls back to the old
+    // synchronous path inside TopicoImageResourceRetriever, so behavior never regresses.
+    private Map<String, byte[]> prefetchTopicImages(List<LaudoTopico> topicos) {
+        Set<String> urls = new HashSet<>();
+        for (LaudoTopico t : topicos) {
+            String conteudo = t.getConteudo();
+            if (conteudo == null) continue;
+            Matcher m = IMG_SRC_PATTERN.matcher(conteudo);
+            while (m.find()) urls.add(m.group(1));
+        }
+        Map<String, CompletableFuture<byte[]>> futures = new HashMap<>();
+        for (String url : urls) {
+            futures.put(url, CompletableFuture.supplyAsync(() -> {
+                byte[] raw = fileStorageService.downloadIfOwnUrl(url);
+                return raw == null ? null : normalizeFormat(raw);
+            }, imageExecutor));
+        }
+        CompletableFuture.allOf(futures.values().toArray(new CompletableFuture[0])).join();
+        Map<String, byte[]> result = new HashMap<>();
+        futures.forEach((url, future) -> result.put(url, future.join()));
+        return result;
+    }
+
     private void addRegistroFotografico(Document doc, Laudo laudo, PdfFont bold, PdfFont regular, String titulo) {
         addSectionTitle(doc, titulo, bold);
 
         List<AreaInspecao> areas = areaRepo.findByLaudoIdOrderByOrdemAsc(laudo.getId());
+        Map<Long, byte[]> processedPhotos = prefetchAreaPhotos(areas);
 
         for (AreaInspecao area : areas) {
             doc.add(new Paragraph("DESCRIÇÃO: " + area.getNome())
@@ -362,17 +414,13 @@ public class PdfGeneratorService {
                 for (int j = i; j < Math.min(i + 2, fotos.size()); j++) {
                     com.laudotech.entity.Foto foto = fotos.get(j);
                     Cell cell = new Cell().setBorder(null).setPadding(4);
-                    try {
-                        byte[] rawBytes = downloadImageBytes(foto.getUrl());
-                        byte[] imgBytes = foto.getPontos().isEmpty()
-                                ? normalizeFormat(rawBytes)
-                                : annotateImage(rawBytes, foto.getPontos());
+                    byte[] imgBytes = processedPhotos.get(foto.getId());
+                    if (imgBytes != null) {
                         Image img = new Image(ImageDataFactory.create(imgBytes));
                         img.setWidth(235).setAutoScale(false)
                                 .setBorder(new SolidBorder(BORDER_COLOR, 1f));
                         cell.add(img);
-                    } catch (Exception e) {
-                        log.warn("Imagem não disponível: {} — {}", foto.getUrl(), e.getMessage(), e);
+                    } else {
                         cell.add(new Paragraph("[Imagem não disponível]").setFont(regular).setFontSize(9));
                     }
                     photoTable.addCell(cell);
@@ -506,10 +554,12 @@ public class PdfGeneratorService {
         Div div = new Div();
         if (laudo.getEngenheiro().getAssinaturaUrl() != null) {
             try {
-                Image sig = new Image(ImageDataFactory.create(new URL(laudo.getEngenheiro().getAssinaturaUrl())));
+                byte[] sigBytes = normalizeFormat(fileStorageService.downloadBytes(laudo.getEngenheiro().getAssinaturaUrl()));
+                Image sig = new Image(ImageDataFactory.create(sigBytes));
                 sig.setWidth(160).setHorizontalAlignment(HorizontalAlignment.CENTER);
                 div.add(sig);
             } catch (Exception e) {
+                log.warn("Não foi possível carregar a assinatura do engenheiro: {}", e.getMessage());
                 div.add(new Paragraph("\n\n_____________________________").setFont(regular).setTextAlignment(TextAlignment.CENTER));
             }
         } else {
@@ -577,8 +627,30 @@ public class PdfGeneratorService {
         }
     }
 
-    private byte[] downloadImageBytes(String url) throws Exception {
-        return fileStorageService.downloadBytes(url);
+    // Downloads and processes (normalizes/annotates) every photo across all areas
+    // concurrently. Doing this one photo at a time made large reports slow enough
+    // to risk exceeding the hosting platform's request timeout.
+    private Map<Long, byte[]> prefetchAreaPhotos(List<AreaInspecao> areas) {
+        Map<Long, CompletableFuture<byte[]>> futures = new HashMap<>();
+        for (AreaInspecao area : areas) {
+            for (com.laudotech.entity.Foto foto : area.getFotos()) {
+                futures.put(foto.getId(), CompletableFuture.supplyAsync(() -> {
+                    try {
+                        byte[] rawBytes = fileStorageService.downloadBytes(foto.getUrl());
+                        return foto.getPontos().isEmpty()
+                                ? normalizeFormat(rawBytes)
+                                : annotateImage(rawBytes, foto.getPontos());
+                    } catch (Exception e) {
+                        log.warn("Imagem não disponível: {} — {}", foto.getUrl(), e.getMessage(), e);
+                        return null;
+                    }
+                }, imageExecutor));
+            }
+        }
+        CompletableFuture.allOf(futures.values().toArray(new CompletableFuture[0])).join();
+        Map<Long, byte[]> result = new HashMap<>();
+        futures.forEach((id, future) -> result.put(id, future.join()));
+        return result;
     }
 
     // Converts any ImageIO-readable format to JPEG TYPE_INT_RGB for iText compatibility.
@@ -610,6 +682,12 @@ public class PdfGeneratorService {
     // MinIO/R2 client) and normalizes their format the same way every other image in this
     // file is normalized. Any URL that isn't recognized as this app's own storage is refused.
     private class TopicoImageResourceRetriever implements IResourceRetriever {
+        private final Map<String, byte[]> cache;
+
+        TopicoImageResourceRetriever(Map<String, byte[]> cache) {
+            this.cache = cache;
+        }
+
         @Override
         public InputStream getInputStreamByUrl(URL url) {
             byte[] bytes = getByteArrayByUrl(url);
@@ -619,6 +697,9 @@ public class PdfGeneratorService {
         @Override
         public byte[] getByteArrayByUrl(URL url) {
             String urlStr = url.toString();
+            if (cache.containsKey(urlStr)) {
+                return cache.get(urlStr);
+            }
             byte[] raw = fileStorageService.downloadIfOwnUrl(urlStr);
             if (raw == null) {
                 log.warn("Imagem de tópico recusada ou indisponível (URL fora do storage da aplicação): {}", urlStr);

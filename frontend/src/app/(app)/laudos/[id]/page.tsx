@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useParams, useRouter } from 'next/navigation'
-import api from '@/lib/api'
+import api, { getErrorMessage } from '@/lib/api'
 import { Laudo, LaudoTopico, AreaInspecao } from '@/types'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -110,6 +110,7 @@ export default function LaudoEditorPage() {
   const scrollToNovoTopico = useRef(false)
   const [confirmAction, setConfirmAction] = useState<'finalizar' | 'nova-versao' | 'excluir' | null>(null)
   const [deleting, setDeleting] = useState(false)
+  const [downloadingPdf, setDownloadingPdf] = useState(false)
 
   useEffect(() => {
     if (scrollToNovoTopico.current) {
@@ -226,10 +227,21 @@ export default function LaudoEditorPage() {
   }
 
   async function downloadPdf() {
-    const res = await api.get(`/laudos/${id}/pdf`, { responseType: 'blob' })
-    const url = URL.createObjectURL(res.data)
-    const a = document.createElement('a'); a.href = url; a.download = `laudo-${id}.pdf`; a.click()
-    URL.revokeObjectURL(url)
+    setDownloadingPdf(true)
+    try {
+      const res = await api.get(`/laudos/${id}/pdf`, { responseType: 'blob' })
+      const url = URL.createObjectURL(res.data)
+      const a = document.createElement('a')
+      a.href = url; a.download = `laudo-${id}.pdf`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      setTimeout(() => URL.revokeObjectURL(url), 30_000)
+    } catch (err) {
+      toast.add({ title: getErrorMessage(err, 'Erro ao baixar o PDF'), type: 'error' })
+    } finally {
+      setDownloadingPdf(false)
+    }
   }
 
   function laudoBasePayload() {
@@ -355,8 +367,8 @@ export default function LaudoEditorPage() {
           <Link href={`/laudos/${id}/preview`}>
             <Button variant="outline"><Eye className="w-4 h-4 mr-2" /> Preview</Button>
           </Link>
-          <Button variant="outline" onClick={downloadPdf}>
-            <Download className="w-4 h-4 mr-2" /> PDF
+          <Button variant="outline" onClick={downloadPdf} disabled={downloadingPdf}>
+            <Download className="w-4 h-4 mr-2" /> {downloadingPdf ? 'Gerando...' : 'PDF'}
           </Button>
         </div>
       </div>

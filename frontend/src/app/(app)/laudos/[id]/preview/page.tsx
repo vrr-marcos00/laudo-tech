@@ -1,10 +1,12 @@
 'use client'
 import type { JSX } from 'react'
+import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useParams } from 'next/navigation'
-import api from '@/lib/api'
+import api, { getErrorMessage } from '@/lib/api'
 import { Laudo, AreaInspecao } from '@/types'
 import { Button } from '@/components/ui/button'
+import { toast } from '@/components/ui/toaster'
 import { ArrowLeft, Download } from 'lucide-react'
 import Link from 'next/link'
 import { formatDate } from '@/lib/date'
@@ -24,6 +26,7 @@ function getPontoBackground(nrs: { prioridade: string }[]): string {
 
 export default function LaudoPreviewPage() {
   const { id } = useParams()
+  const [downloadingPdf, setDownloadingPdf] = useState(false)
 
   const { data: laudo, isLoading } = useQuery<Laudo>({
     queryKey: ['laudo', id],
@@ -38,10 +41,21 @@ export default function LaudoPreviewPage() {
   })
 
   async function downloadPdf() {
-    const res = await api.get(`/laudos/${id}/pdf`, { responseType: 'blob' })
-    const url = URL.createObjectURL(res.data)
-    const a = document.createElement('a'); a.href = url; a.download = `laudo-${id}.pdf`; a.click()
-    URL.revokeObjectURL(url)
+    setDownloadingPdf(true)
+    try {
+      const res = await api.get(`/laudos/${id}/pdf`, { responseType: 'blob' })
+      const url = URL.createObjectURL(res.data)
+      const a = document.createElement('a')
+      a.href = url; a.download = `laudo-${id}.pdf`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      setTimeout(() => URL.revokeObjectURL(url), 30_000)
+    } catch (err) {
+      toast.add({ title: getErrorMessage(err, 'Erro ao baixar o PDF'), type: 'error' })
+    } finally {
+      setDownloadingPdf(false)
+    }
   }
 
   if (isLoading || !laudo) return <div className="p-8 text-slate-500">Carregando preview...</div>
@@ -63,8 +77,8 @@ export default function LaudoPreviewPage() {
           <ArrowLeft className="w-4 h-4" /> Voltar ao Editor
         </Link>
         <div className="flex gap-2">
-          <Button size="sm" className="bg-blue-700 hover:bg-blue-800" onClick={downloadPdf}>
-            <Download className="w-4 h-4 mr-2" /> Baixar PDF
+          <Button size="sm" className="bg-blue-700 hover:bg-blue-800" onClick={downloadPdf} disabled={downloadingPdf}>
+            <Download className="w-4 h-4 mr-2" /> {downloadingPdf ? 'Gerando PDF...' : 'Baixar PDF'}
           </Button>
         </div>
       </div>
@@ -78,7 +92,7 @@ export default function LaudoPreviewPage() {
           {laudo.mostrarCapa !== false && (
             <div style={{ minHeight: '100vh', padding: '2cm', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', pageBreakAfter: 'always' }}>
               {(laudo.logoCapaUrl) && (
-                <img src={laudo.logoCapaUrl} alt="Logo" style={{ maxHeight: 160, marginBottom: 24 }} />
+                <PreviewImage src={laudo.logoCapaUrl} alt="Logo" style={{ maxHeight: 160, marginBottom: 24 }} />
               )}
               <h1 style={{ fontSize: '20pt', fontWeight: 'bold', color: '#00467f', marginBottom: 8 }}>
                 {laudo.tituloCapa || 'LAUDO TÉCNICO DAS INSTALAÇÕES ELÉTRICAS'}
@@ -102,7 +116,7 @@ export default function LaudoPreviewPage() {
           {laudo.mostrarCapaEmpresa && (
             <div style={{ minHeight: '100vh', padding: '2cm', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', pageBreakAfter: 'always' }}>
               {laudo.clienteFotoUrl && (
-                <img src={laudo.clienteFotoUrl} alt="" style={{ maxHeight: 220, marginBottom: 24 }} />
+                <PreviewImage src={laudo.clienteFotoUrl} alt="" style={{ maxHeight: 220, marginBottom: 24 }} />
               )}
               <h1 style={{ fontSize: '20pt', fontWeight: 'bold', color: '#00467f' }}>
                 {laudo.clienteNome.toUpperCase()}
@@ -161,7 +175,7 @@ export default function LaudoPreviewPage() {
           {laudo.mostrarDescricaoEmpresa && (
             <div style={{ padding: '2cm', pageBreakAfter: 'always' }}>
               {laudo.clienteFotoUrl && (
-                <img src={laudo.clienteFotoUrl} alt="" style={{ maxHeight: 160, display: 'block', margin: '0 auto 16px' }} />
+                <PreviewImage src={laudo.clienteFotoUrl} alt="" style={{ maxHeight: 160, display: 'block', margin: '0 auto 16px' }} />
               )}
               <h2 style={{ fontSize: '16pt', fontWeight: 'bold', color: '#00467f', textAlign: 'center', marginBottom: 16 }}>
                 {laudo.clienteNome}
@@ -189,7 +203,7 @@ export default function LaudoPreviewPage() {
                           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 8 }}>
                             {pair.map(foto => (
                               <div key={foto.id} style={{ position: 'relative' }}>
-                                <img src={foto.url} alt="" style={{ width: '100%', maxHeight: 270, objectFit: 'cover', border: '1px solid #ddd' }} />
+                                <PreviewImage src={foto.url} alt="" style={{ width: '100%', maxHeight: 270, objectFit: 'cover', border: '1px solid #ddd' }} />
                                 {/* Annotation points */}
                                 {foto.pontos?.map(ponto => (
                                   <div key={ponto.id} style={{
@@ -353,4 +367,22 @@ function chunkArray<T>(arr: T[], size: number): T[][] {
   const chunks: T[][] = []
   for (let i = 0; i < arr.length; i += size) chunks.push(arr.slice(i, i + size))
   return chunks
+}
+
+// Plain <img> tags fail silently (broken-image icon) on a transient network/storage
+// hiccup, with no retry — looks like "the photo disappeared". This retries once with
+// a cache-busting param before falling back to a visible placeholder.
+function PreviewImage({ src, alt, style }: { src: string; alt: string; style?: React.CSSProperties }) {
+  const [attempt, setAttempt] = useState(0)
+
+  if (attempt >= 2) {
+    return (
+      <div style={{ minHeight: style?.maxHeight ?? 120, ...style, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f1f5f9', color: '#94a3b8', fontSize: '9pt' }}>
+        Imagem indisponível
+      </div>
+    )
+  }
+
+  const resolvedSrc = attempt === 0 ? src : `${src}${src.includes('?') ? '&' : '?'}retry=${attempt}`
+  return <img src={resolvedSrc} alt={alt} style={style} onError={() => setAttempt(a => a + 1)} />
 }
