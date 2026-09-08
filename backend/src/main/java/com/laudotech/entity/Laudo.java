@@ -42,11 +42,8 @@ public class Laudo {
     @Column(name = "data_emissao")
     private LocalDate dataEmissao;
 
-    @Column(name = "quem_acompanhou")
-    private String quemAcompanhou;
-
-    @Column(name = "funcao_acompanhante")
-    private String funcaoAcompanhante;
+    @Column(name = "texto_acompanhante", columnDefinition = "TEXT")
+    private String textoAcompanhante;
 
     @Column(name = "tipo_laudo")
     private String tipoLaudo;

@@ -30,8 +30,7 @@ public class LaudoDto {
     private String tipoLaudo;
     private LocalDate dataVisita;
     private LocalDate dataEmissao;
-    private String quemAcompanhou;
-    private String funcaoAcompanhante;
+    private String textoAcompanhante;
     private Integer versao;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

@@ -32,8 +32,6 @@ function NovoLaudoForm() {
     tipoLaudo: '',
     dataVisita: '',
     dataEmissao: new Date().toISOString().split('T')[0],
-    quemAcompanhou: '',
-    funcaoAcompanhante: '',
   })
 
   const { data: clientes = [] } = useQuery<Cliente[]>({ queryKey: ['clientes'], queryFn: () => api.get('/clientes').then(r => r.data) })
@@ -55,8 +53,6 @@ function NovoLaudoForm() {
         tipoLaudo: form.tipoLaudo || null,
         dataVisita: form.dataVisita || null,
         dataEmissao: form.dataEmissao || null,
-        quemAcompanhou: form.quemAcompanhou || null,
-        funcaoAcompanhante: form.funcaoAcompanhante || null,
       }
       const { data } = await api.post('/laudos', payload)
       qc.invalidateQueries({ queryKey: ['laudos'] })
@@ -127,18 +123,6 @@ function NovoLaudoForm() {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1">
-                <Label>Quem acompanhou a visita</Label>
-                <Input value={form.quemAcompanhou} onChange={e => set('quemAcompanhou', e.target.value)}
-                  placeholder="Ex: João Silva" />
-              </div>
-              <div className="space-y-1">
-                <Label>Função do acompanhante</Label>
-                <Input value={form.funcaoAcompanhante} onChange={e => set('funcaoAcompanhante', e.target.value)}
-                  placeholder="Ex: técnico de manutenção" />
-              </div>
-            </div>
 
             <Button type="submit" className="w-full bg-blue-700 hover:bg-blue-800" disabled={loading || !form.clienteId}>
               {loading ? 'Criando...' : 'Criar Laudo'}

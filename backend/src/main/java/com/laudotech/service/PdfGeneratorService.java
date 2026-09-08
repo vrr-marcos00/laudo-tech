@@ -312,12 +312,8 @@ public class PdfGeneratorService {
         if (laudo.getNumeroArt() != null) addTableRow(tLaudo, "NÚMERO ART", laudo.getNumeroArt(), bold, regular);
         doc.add(tLaudo);
 
-        if (laudo.getQuemAcompanhou() != null && !laudo.getQuemAcompanhou().isBlank()) {
-            String funcao = laudo.getFuncaoAcompanhante();
-            String frase = "Esteve presente durante a inspeção o Sr(a). " + laudo.getQuemAcompanhou()
-                    + (funcao != null && !funcao.isBlank() ? ", " + funcao : "")
-                    + ", que acompanhou e verificou todas as etapas do processo.";
-            doc.add(new Paragraph(frase).setFont(regular).setFontSize(11).setMarginBottom(20));
+        if (laudo.getTextoAcompanhante() != null && !laudo.getTextoAcompanhante().isBlank()) {
+            doc.add(new Paragraph(laudo.getTextoAcompanhante()).setFont(regular).setFontSize(11).setMarginBottom(20));
         }
 
         addSectionTitle(doc, "RESPONSÁVEL TÉCNICO", bold);

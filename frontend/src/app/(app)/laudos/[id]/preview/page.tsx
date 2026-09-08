@@ -154,11 +154,8 @@ export default function LaudoPreviewPage() {
               laudo.numeroArt ? ['NÚMERO ART', laudo.numeroArt] : null,
             ].filter(Boolean) as [string, string][]} />
 
-            {laudo.quemAcompanhou && (
-              <p style={{ marginTop: 12, marginBottom: 12 }}>
-                Esteve presente durante a inspeção o Sr(a). {laudo.quemAcompanhou}
-                {laudo.funcaoAcompanhante ? `, ${laudo.funcaoAcompanhante}` : ''}, que acompanhou e verificou todas as etapas do processo.
-              </p>
+            {laudo.textoAcompanhante && (
+              <p style={{ marginTop: 12, marginBottom: 12 }}>{laudo.textoAcompanhante}</p>
             )}
 
             <SectionTitle style={{ marginTop: 24 }}>RESPONSÁVEL TÉCNICO</SectionTitle>

@@ -41,8 +41,7 @@ public class LaudoService {
                 .engenheiro(authEng).cliente(cliente)
                 .status(Status.RASCUNHO).numeroArt(req.getNumeroArt())
                 .dataVisita(req.getDataVisita()).dataEmissao(req.getDataEmissao())
-                .quemAcompanhou(req.getQuemAcompanhou())
-                .funcaoAcompanhante(req.getFuncaoAcompanhante())
+                .textoAcompanhante(req.getTextoAcompanhante())
                 .tipoLaudo(upper(req.getTipoLaudo())).versao(1)
                 .build();
 
@@ -72,8 +71,7 @@ public class LaudoService {
         laudo.setNumeroArt(req.getNumeroArt());
         laudo.setDataVisita(req.getDataVisita());
         laudo.setDataEmissao(req.getDataEmissao());
-        laudo.setQuemAcompanhou(req.getQuemAcompanhou());
-        laudo.setFuncaoAcompanhante(req.getFuncaoAcompanhante());
+        laudo.setTextoAcompanhante(req.getTextoAcompanhante());
         if (req.getTipoLaudo() != null) laudo.setTipoLaudo(upper(req.getTipoLaudo()));
         if (req.getMostrarCapa() != null) laudo.setMostrarCapa(req.getMostrarCapa());
         if (req.getMostrarSumario() != null) laudo.setMostrarSumario(req.getMostrarSumario());
@@ -191,8 +189,7 @@ public class LaudoService {
                 .status(Status.RASCUNHO)
                 .numeroArt(origem.getNumeroArt())
                 .dataVisita(origem.getDataVisita()).dataEmissao(origem.getDataEmissao())
-                .quemAcompanhou(origem.getQuemAcompanhou())
-                .funcaoAcompanhante(origem.getFuncaoAcompanhante())
+                .textoAcompanhante(origem.getTextoAcompanhante())
                 .tipoLaudo(origem.getTipoLaudo())
                 .versao(origem.getVersao() + 1)
                 .laudoOrigem(origem)
@@ -331,8 +328,7 @@ public class LaudoService {
                 .tipoLaudo(l.getTipoLaudo())
                 .dataVisita(l.getDataVisita())
                 .dataEmissao(l.getDataEmissao())
-                .quemAcompanhou(l.getQuemAcompanhou())
-                .funcaoAcompanhante(l.getFuncaoAcompanhante())
+                .textoAcompanhante(l.getTextoAcompanhante())
                 .versao(l.getVersao())
                 .mostrarCapa(l.isMostrarCapa())
                 .mostrarSumario(l.isMostrarSumario())

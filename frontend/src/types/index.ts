@@ -131,8 +131,7 @@ export interface Laudo {
   tipoLaudo: string | null
   dataVisita: string | null
   dataEmissao: string | null
-  quemAcompanhou: string | null
-  funcaoAcompanhante: string | null
+  textoAcompanhante: string | null
   versao: number
   mostrarCapa: boolean
   mostrarSumario: boolean

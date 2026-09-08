@@ -6,6 +6,7 @@ import api, { getErrorMessage } from '@/lib/api'
 import { Laudo, LaudoTopico, AreaInspecao } from '@/types'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -105,6 +106,7 @@ export default function LaudoEditorPage() {
   const [topicosShowErrors, setTopicosShowErrors] = useState(false)
   const [uploadingLogo, setUploadingLogo] = useState(false)
   const [savingCapa, setSavingCapa] = useState(false)
+  const [savingAcompanhante, setSavingAcompanhante] = useState(false)
   const logoInputRef = useRef<HTMLInputElement>(null)
   const novoTopicoRef = useRef<HTMLDivElement>(null)
   const scrollToNovoTopico = useRef(false)
@@ -251,8 +253,7 @@ export default function LaudoEditorPage() {
       tipoLaudo: laudo!.tipoLaudo,
       dataVisita: laudo!.dataVisita,
       dataEmissao: laudo!.dataEmissao,
-      quemAcompanhou: laudo!.quemAcompanhou,
-      funcaoAcompanhante: laudo!.funcaoAcompanhante,
+      textoAcompanhante: laudo!.textoAcompanhante,
       mostrarCapa: laudo!.mostrarCapa,
       mostrarSumario: laudo!.mostrarSumario,
       mostrarAssinaturaEngenheiro: laudo!.mostrarAssinaturaEngenheiro,
@@ -322,6 +323,16 @@ export default function LaudoEditorPage() {
       qc.setQueryData(['laudo', id], data)
     } finally {
       setSavingCapa(false)
+    }
+  }
+
+  async function salvarTextoAcompanhante(texto: string) {
+    setSavingAcompanhante(true)
+    try {
+      const { data } = await api.put(`/laudos/${id}`, { ...laudoBasePayload(), textoAcompanhante: texto })
+      qc.setQueryData(['laudo', id], data)
+    } finally {
+      setSavingAcompanhante(false)
     }
   }
 
@@ -411,8 +422,6 @@ export default function LaudoEditorPage() {
                 <InfoRow label="Versão" value={String(laudo.versao)} />
                 <InfoRow label="Data da Visita" value={laudo.dataVisita ? formatDate(laudo.dataVisita) : '—'} />
                 <InfoRow label="Data de Emissão" value={laudo.dataEmissao ? formatDate(laudo.dataEmissao) : '—'} />
-                <InfoRow label="Quem acompanhou" value={laudo.quemAcompanhou ?? '—'} />
-                <InfoRow label="Função do acompanhante" value={laudo.funcaoAcompanhante ?? '—'} />
               </div>
             </CardContent>
           </Card>
@@ -546,6 +555,21 @@ export default function LaudoEditorPage() {
             </Card>
 
             <Card>
+              <CardHeader><CardTitle className="text-base">Acompanhante da visita</CardTitle></CardHeader>
+              <CardContent>
+                <p className="text-xs text-slate-500 mb-3">
+                  Texto livre exibido no laudo (na Identificação da Empresa) caso alguém tenha acompanhado a inspeção. Deixe em branco para não incluir esse texto.
+                </p>
+                <AcompanhanteForm
+                  textoAcompanhante={laudo.textoAcompanhante}
+                  saving={savingAcompanhante}
+                  readOnly={readOnly}
+                  onSave={salvarTextoAcompanhante}
+                />
+              </CardContent>
+            </Card>
+
+            <Card>
               <CardHeader><CardTitle className="text-base">Logo da capa</CardTitle></CardHeader>
               <CardContent>
                 <p className="text-xs text-slate-500 mb-4">Logo exibida na capa do laudo (empresa ou engenheiro responsável). Se não informada, usa a logo do cadastro do engenheiro.</p>
@@ -671,6 +695,37 @@ function CapaTituloForm({ tituloCapa, subtituloCapa, saving, readOnly, onSave }:
           size="sm"
           className="bg-blue-700 hover:bg-blue-800"
           onClick={() => onSave(titulo, subtitulo)}
+          disabled={saving}
+        >
+          <Save className="w-4 h-4 mr-2" />{saving ? 'Salvando...' : 'Salvar'}
+        </Button>
+      )}
+    </div>
+  )
+}
+
+function AcompanhanteForm({ textoAcompanhante, saving, readOnly, onSave }: {
+  textoAcompanhante: string | null
+  saving: boolean
+  readOnly: boolean
+  onSave: (texto: string) => Promise<void>
+}) {
+  const [texto, setTexto] = useState(textoAcompanhante ?? '')
+
+  return (
+    <div className="space-y-3">
+      <Textarea
+        value={texto}
+        onChange={e => setTexto(e.target.value)}
+        placeholder="Ex: Esteve presente durante a inspeção o Sr. João Silva, técnico de manutenção, que acompanhou e verificou todas as etapas do processo."
+        disabled={readOnly}
+        rows={4}
+      />
+      {!readOnly && (
+        <Button
+          size="sm"
+          className="bg-blue-700 hover:bg-blue-800"
+          onClick={() => onSave(texto)}
           disabled={saving}
         >
           <Save className="w-4 h-4 mr-2" />{saving ? 'Salvando...' : 'Salvar'}
