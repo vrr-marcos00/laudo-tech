@@ -30,6 +30,7 @@ function getPontoBackground(nrs: { prioridade: string }[]): string {
 export default function LaudoPreviewPage() {
   const { id } = useParams()
   const [downloadingPdf, setDownloadingPdf] = useState(false)
+  const [downloadProgress, setDownloadProgress] = useState(0)
 
   const { data: laudo, isLoading } = useQuery<Laudo>({
     queryKey: ['laudo', id],
@@ -45,8 +46,17 @@ export default function LaudoPreviewPage() {
 
   async function downloadPdf() {
     setDownloadingPdf(true)
+    setDownloadProgress(0)
+    // Geração do PDF não tem um total conhecido de antemão (streaming), então não dá
+    // pra mostrar progresso real — simula um avanço que desacelera perto de 90% e só
+    // pula para 100% quando a resposta realmente chega.
+    const interval = setInterval(() => {
+      setDownloadProgress(p => p >= 90 ? p : p + (90 - p) * 0.1)
+    }, 400)
     try {
       const res = await api.get(`/laudos/${id}/pdf`, { responseType: 'blob' })
+      clearInterval(interval)
+      setDownloadProgress(100)
       const url = URL.createObjectURL(res.data)
       const a = document.createElement('a')
       a.href = url; a.download = `laudo-${id}.pdf`
@@ -54,7 +64,9 @@ export default function LaudoPreviewPage() {
       a.click()
       document.body.removeChild(a)
       setTimeout(() => URL.revokeObjectURL(url), 30_000)
+      await new Promise(r => setTimeout(r, 400))
     } catch (err) {
+      clearInterval(interval)
       toast.add({ title: getErrorMessage(err, 'Erro ao baixar o PDF'), type: 'error' })
     } finally {
       setDownloadingPdf(false)
@@ -75,15 +87,22 @@ export default function LaudoPreviewPage() {
   return (
     <div className="min-h-screen bg-slate-100">
       {/* Fixed toolbar */}
-      <div className="fixed top-0 left-0 right-0 z-50 bg-white border-b shadow-sm px-6 py-3 flex items-center justify-between print:hidden">
-        <Link href={`/laudos/${id}`} className="flex items-center gap-2 text-slate-600 hover:text-slate-800 text-sm">
-          <ArrowLeft className="w-4 h-4" /> Voltar ao Editor
-        </Link>
-        <div className="flex gap-2">
-          <Button size="sm" className="bg-blue-700 hover:bg-blue-800" onClick={downloadPdf} disabled={downloadingPdf}>
-            <Download className="w-4 h-4 mr-2" /> {downloadingPdf ? 'Gerando PDF...' : 'Baixar PDF'}
-          </Button>
+      <div className="fixed top-0 left-0 right-0 z-50 bg-white border-b shadow-sm print:hidden">
+        <div className="px-6 py-3 flex items-center justify-between">
+          <Link href={`/laudos/${id}`} className="flex items-center gap-2 text-slate-600 hover:text-slate-800 text-sm">
+            <ArrowLeft className="w-4 h-4" /> Voltar ao Editor
+          </Link>
+          <div className="flex gap-2">
+            <Button size="sm" className="bg-blue-700 hover:bg-blue-800" onClick={downloadPdf} disabled={downloadingPdf}>
+              <Download className="w-4 h-4 mr-2" /> {downloadingPdf ? `Gerando... ${Math.round(downloadProgress)}%` : 'Baixar PDF'}
+            </Button>
+          </div>
         </div>
+        {downloadingPdf && (
+          <div className="h-1 bg-slate-100 overflow-hidden">
+            <div className="h-full bg-blue-600 transition-all duration-300 ease-out" style={{ width: `${downloadProgress}%` }} />
+          </div>
+        )}
       </div>
 
       {/* Document */}
