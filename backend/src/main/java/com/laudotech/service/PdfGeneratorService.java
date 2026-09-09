@@ -436,6 +436,10 @@ public class PdfGeneratorService {
                     } else {
                         cell.add(new Paragraph("[Imagem não disponível]").setFont(regular).setFontSize(9));
                     }
+                    // Matches the same numbering used in the "Imagem N" sub-header of the
+                    // NR table below, so the client can quickly find a photo from the table.
+                    cell.add(new Paragraph("Imagem " + (j + 1)).setFont(bold).setFontSize(9)
+                            .setFontColor(PRIMARY_COLOR).setTextAlignment(TextAlignment.CENTER).setMarginTop(2));
                     photoTable.addCell(cell);
                 }
                 if (fotos.size() % 2 != 0 && i + 1 >= fotos.size()) {

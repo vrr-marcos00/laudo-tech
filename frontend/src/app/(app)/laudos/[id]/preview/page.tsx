@@ -201,23 +201,30 @@ export default function LaudoPreviewPage() {
                       {chunkArray(area.fotos, 2).map((pair, pi) => (
                         <div key={pi} style={{ marginBottom: 12 }}>
                           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 8 }}>
-                            {pair.map(foto => (
-                              <div key={foto.id} style={{ position: 'relative' }}>
-                                <PreviewImage src={foto.url} alt="" style={{ width: '100%', maxHeight: 270, objectFit: 'cover', border: '1px solid #ddd' }} />
-                                {/* Annotation points */}
-                                {foto.pontos?.map(ponto => (
-                                  <div key={ponto.id} style={{
-                                    position: 'absolute',
-                                    left: `calc(${ponto.xPct * 100}% - 14px)`,
-                                    top: `calc(${ponto.yPct * 100}% - 14px)`,
-                                    width: 28, height: 28, borderRadius: '50%',
-                                    background: getPontoBackground(ponto.nrs ?? []), border: '2px solid white',
-                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                    color: 'white', fontWeight: 'bold', fontSize: 12, fontFamily: 'Arial'
-                                  }}>
-                                    {ponto.numero}
-                                  </div>
-                                ))}
+                            {pair.map((foto, fi) => (
+                              <div key={foto.id}>
+                                <div style={{ position: 'relative' }}>
+                                  <PreviewImage src={foto.url} alt="" style={{ width: '100%', maxHeight: 270, objectFit: 'cover', border: '1px solid #ddd' }} />
+                                  {/* Annotation points */}
+                                  {foto.pontos?.map(ponto => (
+                                    <div key={ponto.id} style={{
+                                      position: 'absolute',
+                                      left: `calc(${ponto.xPct * 100}% - 14px)`,
+                                      top: `calc(${ponto.yPct * 100}% - 14px)`,
+                                      width: 28, height: 28, borderRadius: '50%',
+                                      background: getPontoBackground(ponto.nrs ?? []), border: '2px solid white',
+                                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                      color: 'white', fontWeight: 'bold', fontSize: 12, fontFamily: 'Arial'
+                                    }}>
+                                      {ponto.numero}
+                                    </div>
+                                  ))}
+                                </div>
+                                {/* Matches the "Imagem N" sub-header in the NR table below, so the
+                                    client can quickly find a photo from the table. */}
+                                <p style={{ textAlign: 'center', fontWeight: 'bold', color: '#00467f', fontSize: '9pt', marginTop: 4 }}>
+                                  Imagem {pi * 2 + fi + 1}
+                                </p>
                               </div>
                             ))}
                             {pair.length < 2 && <div />}
