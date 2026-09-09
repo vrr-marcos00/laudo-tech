@@ -828,8 +828,13 @@ public class PdfGeneratorService {
 
         g.dispose();
 
+        // JPEG, not PNG: img is already flattened to opaque RGB (no transparency to
+        // preserve), and PNG compresses photographic content far worse than JPEG —
+        // annotated photos were coming out 500KB-1.4MB each (vs. tens of KB for
+        // unannotated ones going through normalizeFormat), which was a major
+        // contributor to both slow generation and slow download of large reports.
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        ImageIO.write(img, "PNG", baos);
+        ImageIO.write(img, "JPEG", baos);
         return baos.toByteArray();
     }
 
