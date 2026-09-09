@@ -43,7 +43,7 @@ app:
     allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000}
   pdf:
     # How many photos are downloaded/re-encoded concurrently during PDF generation.
-    # Higher = faster for reports with many photos, but each full-resolution photo
-    # decode can use tens of MB of heap while in flight, so this is capped low by
-    # default to fit hosting plans with modest memory limits.
-    image-threads: ${PDF_IMAGE_THREADS:4}
+    # Photo decoding is now subsampled (never materializes full-resolution bitmaps) and
+    # re-encoded as JPEG, so the per-photo memory cost is small; the dominant cost per
+    # photo is the network round-trip to object storage, so this can be set fairly high.
+    image-threads: ${PDF_IMAGE_THREADS:16}
