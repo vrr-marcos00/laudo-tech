@@ -3,12 +3,14 @@ package com.laudotech.controller;
 import com.laudotech.entity.Engenheiro;
 import com.laudotech.service.LaudoService;
 import com.laudotech.service.PdfGeneratorService;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
+
+import java.io.IOException;
 
 @RestController
 @RequestMapping("/api/v1/laudos")
@@ -21,23 +23,22 @@ public class PdfController {
         return (Engenheiro) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
     }
 
+    // Writes straight to the response's OutputStream (see PdfGeneratorService.generate)
+    // instead of building a ResponseEntity<byte[]>, so the whole PDF never needs to sit
+    // in memory as one big array.
     @GetMapping("/{id}/pdf")
-    public ResponseEntity<byte[]> downloadPdf(@PathVariable Long id) {
+    public void downloadPdf(@PathVariable Long id, HttpServletResponse response) throws IOException {
         laudoService.assertAcesso(id, auth());
-        byte[] pdf = pdfService.generate(id);
-        return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"laudo-" + id + ".pdf\"")
-                .contentType(MediaType.APPLICATION_PDF)
-                .body(pdf);
+        response.setContentType(MediaType.APPLICATION_PDF_VALUE);
+        response.setHeader(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"laudo-" + id + ".pdf\"");
+        pdfService.generate(id, response.getOutputStream());
     }
 
     @GetMapping("/{id}/preview-pdf")
-    public ResponseEntity<byte[]> previewPdf(@PathVariable Long id) {
+    public void previewPdf(@PathVariable Long id, HttpServletResponse response) throws IOException {
         laudoService.assertAcesso(id, auth());
-        byte[] pdf = pdfService.generate(id);
-        return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"laudo-" + id + ".pdf\"")
-                .contentType(MediaType.APPLICATION_PDF)
-                .body(pdf);
+        response.setContentType(MediaType.APPLICATION_PDF_VALUE);
+        response.setHeader(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"laudo-" + id + ".pdf\"");
+        pdfService.generate(id, response.getOutputStream());
     }
 }

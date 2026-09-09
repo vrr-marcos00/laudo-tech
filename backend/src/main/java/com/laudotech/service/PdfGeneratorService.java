@@ -50,6 +50,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.URL;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -108,14 +109,20 @@ public class PdfGeneratorService {
             "BAIXO",   new DeviceRgb(37, 99, 235)
     );
 
-    public byte[] generate(Long laudoId) {
+    // Writes straight to the caller-supplied stream (the HTTP response body) instead of
+    // buffering the whole PDF in a ByteArrayOutputStream first. A report with many photos
+    // can produce a PDF of tens to hundreds of MB; holding all of that in a growing
+    // in-memory array (and briefly double that during its internal reallocation) was
+    // observed in production to exhaust the heap right at doc.close(), even after photo
+    // processing itself was made memory-efficient. Streaming directly to the response
+    // means only the current, still-open page needs to be in memory at any point.
+    public void generate(Long laudoId, OutputStream out) {
         laudoService.ensureTopicosEspeciais(laudoId);
         Laudo laudo = laudoRepo.findById(laudoId)
                 .orElseThrow(() -> new RuntimeException("Laudo não encontrado"));
 
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
         try {
-            PdfWriter writer = new PdfWriter(baos);
+            PdfWriter writer = new PdfWriter(out);
             PdfDocument pdf = new PdfDocument(writer);
             pdf.setDefaultPageSize(PageSize.A4);
 
@@ -171,8 +178,6 @@ public class PdfGeneratorService {
         } catch (Exception e) {
             throw new RuntimeException("Erro ao gerar PDF: " + e.getMessage(), e);
         }
-
-        return baos.toByteArray();
     }
 
     private void addCover(Document doc, Laudo laudo, PdfFont bold, PdfFont regular) throws IOException {
