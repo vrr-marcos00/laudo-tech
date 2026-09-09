@@ -494,6 +494,7 @@ public class PdfGeneratorService {
                         }
                     }
                     doc.add(nrTable);
+                    doc.add(buildPriorityLegend(regular, bold));
                 }
             }
         }
@@ -638,6 +639,33 @@ public class PdfGeneratorService {
             table.addCell(new Cell().add(new Paragraph(val != null ? val : "").setFont(regular).setFontSize(9.5f))
                     .setBorder(new SolidBorder(BORDER_COLOR, 0.5f)).setPadding(5));
         }
+    }
+
+    private static final String[] PRIORITY_ORDER = {"CRITICO", "ALTO", "MEDIO", "BAIXO"};
+    private static final String[] PRIORITY_LABELS = {"Crítico", "Alto", "Médio", "Baixo"};
+
+    // Explains what the colored dots on the photo annotations (and the "Norma" column
+    // above) mean, so the printed report is understandable on its own.
+    //
+    // The dot is drawn with the "l" glyph from ZapfDingbats (one of the 14 standard PDF
+    // fonts, guaranteed available without embedding) — it renders as a filled circle.
+    // Times-Roman/Times-Bold don't have a circle glyph at all (WinAnsi encoding has no
+    // U+25CF "●"), so using those for a literal "●" character silently renders nothing.
+    private Paragraph buildPriorityLegend(PdfFont regular, PdfFont bold) {
+        PdfFont dingbats;
+        try {
+            dingbats = PdfFontFactory.createFont(com.itextpdf.io.font.constants.StandardFonts.ZAPFDINGBATS);
+        } catch (IOException e) {
+            throw new RuntimeException("Erro ao carregar fonte ZapfDingbats", e);
+        }
+        Paragraph legend = new Paragraph().setFontSize(9f).setMarginBottom(15);
+        legend.add(new Text("Legenda: ").setFont(bold).setFontColor(new DeviceRgb(100, 116, 139)));
+        for (int i = 0; i < PRIORITY_ORDER.length; i++) {
+            legend.add(new Text("l ").setFont(dingbats).setFontColor(PRIORITY_COLORS_PDF.get(PRIORITY_ORDER[i])));
+            legend.add(new Text(PRIORITY_LABELS[i] + (i < PRIORITY_ORDER.length - 1 ? "    " : ""))
+                    .setFont(regular).setFontColor(ColorConstants.BLACK));
+        }
+        return legend;
     }
 
     // Downloads and processes (normalizes/annotates) every photo of ONE area concurrently.
@@ -839,8 +867,7 @@ public class PdfGeneratorService {
     }
 
     private Color getPontoColor(PontoAnotacao ponto) {
-        String[] order = {"CRITICO", "ALTO", "MEDIO", "BAIXO"};
-        for (String p : order) {
+        for (String p : PRIORITY_ORDER) {
             for (PontoNr pnr : ponto.getNrs()) {
                 if (pnr.getNrCatalogo().getPrioridade().name().equals(p)) {
                     switch (p) {

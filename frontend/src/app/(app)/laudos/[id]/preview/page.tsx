@@ -16,6 +16,9 @@ const PRIORITY_COLORS: Record<string, string> = {
 }
 
 const PRIORITY_ORDER = ['CRITICO', 'ALTO', 'MEDIO', 'BAIXO']
+const PRIORITY_LABELS: Record<string, string> = {
+  CRITICO: 'Crítico', ALTO: 'Alto', MEDIO: 'Médio', BAIXO: 'Baixo'
+}
 
 function getPontoBackground(nrs: { prioridade: string }[]): string {
   for (const p of PRIORITY_ORDER) {
@@ -264,6 +267,7 @@ export default function LaudoPreviewPage() {
                               </tbody>
                             </table>
                           )}
+                          {pair.some(f => f.pontos?.some(p => p.nrs?.length > 0)) && <PriorityLegend />}
                         </div>
                       ))}
                     </div>
@@ -357,6 +361,20 @@ function InfoTable({ rows }: { rows: [string, string][] }) {
         ))}
       </tbody>
     </table>
+  )
+}
+
+function PriorityLegend() {
+  return (
+    <p style={{ fontSize: '9pt', marginBottom: 12 }}>
+      <span style={{ fontWeight: 'bold', color: '#64748b' }}>Legenda: </span>
+      {PRIORITY_ORDER.map((p, i) => (
+        <span key={p} style={{ marginRight: i < PRIORITY_ORDER.length - 1 ? 16 : 0 }}>
+          <span style={{ display: 'inline-block', width: 10, height: 10, borderRadius: '50%', background: PRIORITY_COLORS[p], marginRight: 4 }} />
+          {PRIORITY_LABELS[p]}
+        </span>
+      ))}
+    </p>
   )
 }
 
