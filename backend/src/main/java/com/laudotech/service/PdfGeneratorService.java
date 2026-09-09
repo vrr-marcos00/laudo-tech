@@ -626,18 +626,32 @@ public class PdfGeneratorService {
     // Downloads and processes (normalizes/annotates) every photo across all areas
     // concurrently. Doing this one photo at a time made large reports slow enough
     // to risk exceeding the hosting platform's request timeout.
+    //
+    // Every JPA-managed field (foto.getUrl(), foto.getPontos() and everything the
+    // latter drags in — PontoNr, NrCatalogo) is read HERE, on the calling request
+    // thread, before anything is handed to imageExecutor. Hibernate's Session/Persistence
+    // Context (kept open for the whole request by spring.jpa.open-in-view) is not
+    // thread-safe: touching a lazy association from a worker thread races with the
+    // request thread over the same Session and corrupts it (observed in production as
+    // "Illegal pop() with non-matching JdbcValuesSourceProcessingState", and locally as
+    // silently-varying numbers of "[Imagem não disponível]" placeholders between
+    // otherwise-identical requests). The async lambda below only ever touches plain
+    // values (String, PontoDraw) that were already resolved on this thread.
     private Map<Long, byte[]> prefetchAreaPhotos(List<AreaInspecao> areas) {
         Map<Long, CompletableFuture<byte[]>> futures = new HashMap<>();
         for (AreaInspecao area : areas) {
             for (com.laudotech.entity.Foto foto : area.getFotos()) {
-                futures.put(foto.getId(), CompletableFuture.supplyAsync(() -> {
+                Long fotoId = foto.getId();
+                String url = foto.getUrl();
+                List<PontoDraw> pontos = foto.getPontos().stream()
+                        .map(p -> new PontoDraw(p.getNumero(), p.getXPct().doubleValue(), p.getYPct().doubleValue(), getPontoColor(p)))
+                        .toList();
+                futures.put(fotoId, CompletableFuture.supplyAsync(() -> {
                     try {
-                        byte[] rawBytes = fileStorageService.downloadBytes(foto.getUrl());
-                        return foto.getPontos().isEmpty()
-                                ? normalizeFormat(rawBytes)
-                                : annotateImage(rawBytes, foto.getPontos());
+                        byte[] rawBytes = fileStorageService.downloadBytes(url);
+                        return pontos.isEmpty() ? normalizeFormat(rawBytes) : annotateImage(rawBytes, pontos);
                     } catch (Exception e) {
-                        log.warn("Imagem não disponível: {} — {}", foto.getUrl(), e.getMessage(), e);
+                        log.warn("Imagem não disponível: {} — {}", url, e.getMessage(), e);
                         return null;
                     }
                 }, imageExecutor));
@@ -705,7 +719,11 @@ public class PdfGeneratorService {
         }
     }
 
-    private byte[] annotateImage(byte[] imageBytes, List<PontoAnotacao> pontos) throws Exception {
+    // Plain, already-resolved snapshot of a PontoAnotacao — carries no JPA entity
+    // references, so it's safe to pass across threads (see prefetchAreaPhotos()).
+    private record PontoDraw(int numero, double xPct, double yPct, Color color) {}
+
+    private byte[] annotateImage(byte[] imageBytes, List<PontoDraw> pontos) throws Exception {
         BufferedImage src = ImageIO.read(new ByteArrayInputStream(imageBytes));
         if (src == null) return imageBytes;
 
@@ -718,15 +736,13 @@ public class PdfGeneratorService {
 
         int r = Math.max(20, Math.min(img.getWidth(), img.getHeight()) / 25);
 
-        for (PontoAnotacao ponto : pontos) {
-            int cx = (int) (ponto.getXPct().doubleValue() * img.getWidth());
-            int cy = (int) (ponto.getYPct().doubleValue() * img.getHeight());
-
-            Color fill = getPontoColor(ponto);
+        for (PontoDraw ponto : pontos) {
+            int cx = (int) (ponto.xPct() * img.getWidth());
+            int cy = (int) (ponto.yPct() * img.getHeight());
 
             // Fill with ~82% opacity blended onto the RGB background
             g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 210f / 255f));
-            g.setColor(fill);
+            g.setColor(ponto.color());
             g.fillOval(cx - r, cy - r, r * 2, r * 2);
 
             // White border fully opaque
@@ -737,7 +753,7 @@ public class PdfGeneratorService {
 
             // Number label
             g.setFont(new Font("Arial", Font.BOLD, (int) (r * 1.1)));
-            String num = String.valueOf(ponto.getNumero());
+            String num = String.valueOf(ponto.numero());
             FontMetrics fm = g.getFontMetrics();
             g.drawString(num, cx - fm.stringWidth(num) / 2, cy + fm.getAscent() / 2 - 1);
         }
