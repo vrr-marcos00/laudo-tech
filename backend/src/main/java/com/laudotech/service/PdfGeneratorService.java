@@ -27,9 +27,11 @@ import com.itextpdf.styledxmlparser.resolver.resource.IResourceRetriever;
 import com.laudotech.dto.*;
 import com.laudotech.entity.*;
 import com.laudotech.repository.*;
+import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.awt.AlphaComposite;
@@ -74,10 +76,18 @@ public class PdfGeneratorService {
     // used to fetch them one at a time, which could take long enough to exceed
     // the hosting platform's request timeout. This pool lets that work happen
     // concurrently; PDF assembly itself still happens single-threaded below.
-    private final ExecutorService imageExecutor = Executors.newFixedThreadPool(8);
+    @Value("${app.pdf.image-threads}")
+    private int imageThreads;
+
+    private ExecutorService imageExecutor;
 
     private static final Pattern IMG_SRC_PATTERN =
             Pattern.compile("<img[^>]+src=[\"']([^\"']+)[\"']", Pattern.CASE_INSENSITIVE);
+
+    @PostConstruct
+    void initImageExecutor() {
+        imageExecutor = Executors.newFixedThreadPool(imageThreads);
+    }
 
     @PreDestroy
     void shutdownImageExecutor() {
@@ -391,7 +401,6 @@ public class PdfGeneratorService {
         addSectionTitle(doc, titulo, bold);
 
         List<AreaInspecao> areas = areaRepo.findByLaudoIdOrderByOrdemAsc(laudo.getId());
-        Map<Long, byte[]> processedPhotos = prefetchAreaPhotos(areas);
 
         for (AreaInspecao area : areas) {
             doc.add(new Paragraph("DESCRIÇÃO: " + area.getNome())
@@ -402,6 +411,9 @@ public class PdfGeneratorService {
             }
 
             List<com.laudotech.entity.Foto> fotos = area.getFotos();
+            // Prefetched one area at a time (not the whole report up front) so peak memory
+            // stays bounded to one area's photos instead of every photo in the document.
+            Map<Long, byte[]> processedPhotos = prefetchAreaPhotos(fotos);
 
             // 2 photos per row
             for (int i = 0; i < fotos.size(); i += 2) {
@@ -623,9 +635,13 @@ public class PdfGeneratorService {
         }
     }
 
-    // Downloads and processes (normalizes/annotates) every photo across all areas
-    // concurrently. Doing this one photo at a time made large reports slow enough
-    // to risk exceeding the hosting platform's request timeout.
+    // Downloads and processes (normalizes/annotates) every photo of ONE area concurrently.
+    // Doing this one photo at a time made large reports slow enough to risk exceeding the
+    // hosting platform's request timeout — but processing every area of the whole report
+    // at once (holding every photo's decoded/re-encoded bytes in memory simultaneously)
+    // risked an OutOfMemoryError instead, since each full-resolution decode can briefly
+    // need tens of MB of heap. Scoping this to one area at a time bounds peak memory to
+    // that area's photos; results are released once that area is written to the document.
     //
     // Every JPA-managed field (foto.getUrl(), foto.getPontos() and everything the
     // latter drags in — PontoNr, NrCatalogo) is read HERE, on the calling request
@@ -637,25 +653,23 @@ public class PdfGeneratorService {
     // silently-varying numbers of "[Imagem não disponível]" placeholders between
     // otherwise-identical requests). The async lambda below only ever touches plain
     // values (String, PontoDraw) that were already resolved on this thread.
-    private Map<Long, byte[]> prefetchAreaPhotos(List<AreaInspecao> areas) {
+    private Map<Long, byte[]> prefetchAreaPhotos(List<com.laudotech.entity.Foto> fotos) {
         Map<Long, CompletableFuture<byte[]>> futures = new HashMap<>();
-        for (AreaInspecao area : areas) {
-            for (com.laudotech.entity.Foto foto : area.getFotos()) {
-                Long fotoId = foto.getId();
-                String url = foto.getUrl();
-                List<PontoDraw> pontos = foto.getPontos().stream()
-                        .map(p -> new PontoDraw(p.getNumero(), p.getXPct().doubleValue(), p.getYPct().doubleValue(), getPontoColor(p)))
-                        .toList();
-                futures.put(fotoId, CompletableFuture.supplyAsync(() -> {
-                    try {
-                        byte[] rawBytes = fileStorageService.downloadBytes(url);
-                        return pontos.isEmpty() ? normalizeFormat(rawBytes) : annotateImage(rawBytes, pontos);
-                    } catch (Exception e) {
-                        log.warn("Imagem não disponível: {} — {}", url, e.getMessage(), e);
-                        return null;
-                    }
-                }, imageExecutor));
-            }
+        for (com.laudotech.entity.Foto foto : fotos) {
+            Long fotoId = foto.getId();
+            String url = foto.getUrl();
+            List<PontoDraw> pontos = foto.getPontos().stream()
+                    .map(p -> new PontoDraw(p.getNumero(), p.getXPct().doubleValue(), p.getYPct().doubleValue(), getPontoColor(p)))
+                    .toList();
+            futures.put(fotoId, CompletableFuture.supplyAsync(() -> {
+                try {
+                    byte[] rawBytes = fileStorageService.downloadBytes(url);
+                    return pontos.isEmpty() ? normalizeFormat(rawBytes) : annotateImage(rawBytes, pontos);
+                } catch (Exception e) {
+                    log.warn("Imagem não disponível: {} — {}", url, e.getMessage(), e);
+                    return null;
+                }
+            }, imageExecutor));
         }
         CompletableFuture.allOf(futures.values().toArray(new CompletableFuture[0])).join();
         Map<Long, byte[]> result = new HashMap<>();
@@ -663,18 +677,63 @@ public class PdfGeneratorService {
         return result;
     }
 
-    // Converts any ImageIO-readable format to JPEG TYPE_INT_RGB for iText compatibility.
+    // Photos land here straight from a phone camera (often 12+ MP), but are only ever
+    // displayed ~235pt (3.3in) wide in the PDF — anything past this is wasted memory
+    // and wasted file size for zero visible gain.
+    private static final int MAX_IMAGE_DIMENSION = 1000;
+
+    // Decodes an image downscaled by an integer subsampling factor so the full-resolution
+    // bitmap is never materialized in memory. A naive ImageIO.read() on a 12MP photo (common
+    // for phone cameras) allocates ~35-50MB per image just to decode it, and doing several of
+    // those concurrently (see imageExecutor) was enough to exhaust the heap on a modest hosting
+    // plan even though the final embedded image is tiny. Subsampling during decode keeps peak
+    // memory close to the FINAL image size instead of the original's.
+    private BufferedImage readDownscaled(byte[] imageBytes) throws IOException {
+        try (javax.imageio.stream.ImageInputStream iis =
+                     ImageIO.createImageInputStream(new ByteArrayInputStream(imageBytes))) {
+            if (iis == null) return null;
+            java.util.Iterator<javax.imageio.ImageReader> readers = ImageIO.getImageReaders(iis);
+            if (!readers.hasNext()) return null;
+            javax.imageio.ImageReader reader = readers.next();
+            try {
+                reader.setInput(iis);
+                int width = reader.getWidth(0);
+                int height = reader.getHeight(0);
+                int subsampling = Math.max(1, Math.max(width, height) / MAX_IMAGE_DIMENSION);
+                javax.imageio.ImageReadParam param = reader.getDefaultReadParam();
+                if (subsampling > 1) {
+                    param.setSourceSubsampling(subsampling, subsampling, 0, 0);
+                }
+                return reader.read(0, param);
+            } finally {
+                reader.dispose();
+            }
+        }
+    }
+
+    private int[] scaledDimensions(int width, int height) {
+        if (width <= MAX_IMAGE_DIMENSION && height <= MAX_IMAGE_DIMENSION) {
+            return new int[]{width, height};
+        }
+        double scale = MAX_IMAGE_DIMENSION / (double) Math.max(width, height);
+        return new int[]{Math.max(1, (int) Math.round(width * scale)), Math.max(1, (int) Math.round(height * scale))};
+    }
+
+    // Converts any ImageIO-readable format to JPEG TYPE_INT_RGB for iText compatibility,
+    // downscaling oversized photos on the way (see MAX_IMAGE_DIMENSION).
     // Falls back to raw bytes when ImageIO can't decode the format.
     private byte[] normalizeFormat(byte[] imageBytes) {
         try {
-            BufferedImage src = ImageIO.read(new ByteArrayInputStream(imageBytes));
+            BufferedImage src = readDownscaled(imageBytes);
             if (src == null) {
                 log.warn("ImageIO não conseguiu decodificar a imagem (formato não suportado) — repassando bytes originais ao iText");
                 return imageBytes;
             }
-            BufferedImage rgb = new BufferedImage(src.getWidth(), src.getHeight(), BufferedImage.TYPE_INT_RGB);
+            int[] dims = scaledDimensions(src.getWidth(), src.getHeight());
+            BufferedImage rgb = new BufferedImage(dims[0], dims[1], BufferedImage.TYPE_INT_RGB);
             Graphics2D g = rgb.createGraphics();
-            g.drawImage(src, 0, 0, null);
+            g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+            g.drawImage(src, 0, 0, dims[0], dims[1], null);
             g.dispose();
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             ImageIO.write(rgb, "JPEG", baos);
@@ -724,15 +783,19 @@ public class PdfGeneratorService {
     private record PontoDraw(int numero, double xPct, double yPct, Color color) {}
 
     private byte[] annotateImage(byte[] imageBytes, List<PontoDraw> pontos) throws Exception {
-        BufferedImage src = ImageIO.read(new ByteArrayInputStream(imageBytes));
+        BufferedImage src = readDownscaled(imageBytes);
         if (src == null) return imageBytes;
 
         // Use TYPE_INT_RGB (no alpha channel) for full iText compatibility.
         // AlphaComposite simulates transparency during drawing without requiring ARGB PNG.
-        BufferedImage img = new BufferedImage(src.getWidth(), src.getHeight(), BufferedImage.TYPE_INT_RGB);
+        // Downscaled the same way normalizeFormat() is (see MAX_IMAGE_DIMENSION); point
+        // positions are stored as percentages, so this doesn't affect their placement.
+        int[] dims = scaledDimensions(src.getWidth(), src.getHeight());
+        BufferedImage img = new BufferedImage(dims[0], dims[1], BufferedImage.TYPE_INT_RGB);
         Graphics2D g = img.createGraphics();
         g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        g.drawImage(src, 0, 0, null);
+        g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+        g.drawImage(src, 0, 0, dims[0], dims[1], null);
 
         int r = Math.max(20, Math.min(img.getWidth(), img.getHeight()) / 25);
 
